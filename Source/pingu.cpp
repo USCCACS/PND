@@ -47,24 +47,7 @@ void Pingu::defineParams(int numberOfAtoms) {
             {2*nodes + 2*numberOfAtoms*3*nodes + 2*3*numberOfAtoms, 1});
 }
 
-
-
-int not_main() {
-
-    /* MARK: Initialization Block*/
-    // Set initial weights
-
-
-
-    // Get atom positions and velocities over time steps, simultaneously store initial value and final values by performing MD
-
-
-
-
-
-    }
-
-std::pair<torch::Tensor, torch::Tensor> LossPreTrain(torch::Tensor params, torch::Tensor t_seq,
+std::pair<torch::Tensor, torch::Tensor> Pingu::LossPreTrain(torch::Tensor params, torch::Tensor t_seq,
         std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs,
         int n, int Np, int d) {
     params.set_requires_grad(true);
@@ -108,7 +91,7 @@ std::pair<torch::Tensor, torch::Tensor> LossPreTrain(torch::Tensor params, torch
     return std::make_pair(grads, loss);
 }
 
-std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> Loss(
+std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> Pingu::Loss(
         SubSystem checkPointState, torch::Tensor params, torch::Tensor t_seq,
         std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs,
         torch::Tensor totalEnergy, int n, int Np, int d) {
@@ -168,7 +151,7 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Te
     return std::make_tuple(grads, loss, icfsLoss, eq, energyLoss, momentumLoss);
 }
 
-std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> UpdatePreParamsNADAM(torch::Tensor t_seq,
+std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> Pingu::UpdatePreParamsNADAM(torch::Tensor t_seq,
         torch::Tensor params, std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs,
         torch::Tensor velocities, torch::Tensor S, int epoch, int n, int Np, int d,
         double alpha, double epsilon, torch::Tensor beta) {
@@ -188,7 +171,7 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> UpdatePre
     return std::make_tuple(params, velocities, S, meanLoss);
 }
 
-std::pair<torch::Tensor, torch::Tensor> PreTrain(torch::Tensor params, torch::Tensor t_seq,
+std::pair<torch::Tensor, torch::Tensor> Pingu::PreTrain(torch::Tensor params, torch::Tensor t_seq,
         std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs,
         int num_epochs, int n, int Np, int d, double learn_rate, double momentum) {
     torch::Tensor velocities = torch::zeros(params.sizes());

@@ -236,7 +236,7 @@ int main(int argc, char **argv) {
 
     // Make call for pre-train step
     cout << "Pre-training in progress" << endl;
-    std::pair<torch::Tensor, torch::Tensor> preTrainLossValues = pingu.PreTrain(pingu.params, t_seq, icfs, pingu.PreTrainEpochs, pingu.nodes, Np, 3);
+    std::pair<torch::Tensor, torch::Tensor> preTrainLossValues = pingu.PreTrain(t_seq, icfs, pingu.PreTrainEpochs, pingu.nodes, Np, 3);
     cout << "The mean loss from pre-train is " << preTrainLossValues.second << endl;
 
     // Small pause here to see the pre-train loss

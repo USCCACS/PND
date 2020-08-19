@@ -14,12 +14,14 @@ public:
 
     Pingu();
     void defineParams(int numberOfAtoms);
-    std::pair<torch::Tensor, torch::Tensor> LossPreTrain(torch::Tensor params, torch::Tensor t_seq,
+    std::pair<torch::Tensor, torch::Tensor> LossPreTrain(torch::Tensor t_seq,
                                                          std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs,
                                                          int n , int Np, int d);
-    std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> Loss(int stepsToState, torch::Tensor params, torch::Tensor t_seq,
+
+    virtual std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> Loss(torch::Tensor t_seq,
             std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs,
             torch::Tensor totalEnergy, int n, int Np, int d);
+
     std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> UpdatePreParamsNADAM(torch::Tensor t_seq,
             torch::Tensor params, std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs,
             torch::Tensor velocities,

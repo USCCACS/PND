@@ -6,6 +6,74 @@
 #include "../Source/pingu.cpp"
 #include "scratch_pad.hpp"
 
+class ScratchPad: Pingu {
+
+    SubSystem checkPointState;
+
+    void setCheckPoint(SubSystem checkPointState) {
+        this->checkPointState = checkPointState;
+    }
+
+    std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor,
+            torch::Tensor, torch::Tensor> Loss(torch::Tensor t_seq,
+                                               std::tuple<torch::Tensor, torch::Tensor, torch::Tensor,
+                                                       torch::Tensor> icfs, torch::Tensor totalEnergy, int n, int Np, int d) {
+        params.set_requires_grad(true);
+        //    totalEnergy.set_requires_grad(true);
+        //    t_seq.set_requires_grad(false);
+
+        torch::Tensor w0 = params.narrow(0,0, n);
+        torch::Tensor b0 = params.narrow(0, n, n);
+        torch::Tensor w1 = params.narrow (0, 2*n, 2*n*3*Np).reshape({2*3*Np, n});
+        torch::Tensor b1 = params.narrow(0, 2*n+(2*n*3*Np), 2*3*Np);
+        torch::Tensor tmp = torch::ger(torch::squeeze(w0), torch::squeeze(t_seq)) + b0;
+        torch::Tensor tmp1 = torch::sigmoid(tmp);
+        torch::Tensor q = torch::matmul(w1, tmp1) + b1;
+        torch::Tensor qt = q.transpose(0, 1);
+
+        //loss from intial and final states
+
+        torch::Tensor trackedAtomsXPositions = qt.narrow(1, 0, Np-movedAtoms);
+        torch::Tensor trackedAtomsYPositions = qt.narrow(1, 1*Np, Np-movedAtoms);
+        torch::Tensor trackedAtomsZPositions = qt.narrow(1, 2*Np, Np-movedAtoms);
+        torch::Tensor trackedAtomsXVelocities = qt.narrow(1, 3*Np,Np-movedAtoms);
+        torch::Tensor trackedAtomsYVelocities = qt.narrow(1, (3*Np)+(1*Np), Np-movedAtoms);
+        torch::Tensor trackedAtomsZVelocities = qt.narrow(1, (3*Np)+(2*Np), Np-movedAtoms);
+        torch::Tensor trackedAtomsPositions = torch::cat({trackedAtomsXPositions, trackedAtomsYPositions, trackedAtomsZPositions}, 1);
+        torch::Tensor trackedAtomsVelocities = torch::cat({trackedAtomsXVelocities, trackedAtomsYVelocities, trackedAtomsZVelocities}, 1);
+
+        torch::Tensor icfsLoss =  (trackedAtomsPositions[0] - std::get<0>(icfs)).pow(2).sum();
+        icfsLoss += (trackedAtomsPositions[StepTrain - 1] - std::get<1>(icfs)).pow(2).sum();
+        icfsLoss += (trackedAtomsVelocities[0] - std::get<2>(icfs)).pow(2).sum();
+        icfsLoss += (trackedAtomsVelocities[StepTrain - 1] - std::get<3>(icfs)).pow(2).sum();
+
+        auto PEs = LJ3D_M(checkPointState, qt.narrow(1, 0, d*Np), Np); // Send the initial X,Y,Z
+        torch::Tensor PE = std::get<0>(PEs).div(Np);
+        torch::Tensor maxPE = PE.abs().max();
+        icfsLoss = torch::div(icfsLoss, maxPE);
+
+        torch::Tensor KE = 0.5*(qt.narrow(1, d*Np, d*Np).pow(2).sum(1)).div(Np).reshape_as(PE);
+        torch::Tensor Hm = PE + KE;
+        torch::Tensor forces = std::get<1>(PEs);
+        torch::Tensor eq = torch::zeros(icfsLoss.sizes());
+        //       torch::mean((forces.narrow(1, 0, Np) - dqt.narrow(1, d*Np, Np)).pow(2)) +
+        //       torch::mean((forces.narrow(1, Np, Np) - dqt.narrow(1, d*Np + Np, Np)).pow(2)) +
+        //       torch::mean((forces.narrow(1, Np + Np, Np) - dqt.narrow(1, d*Np + Np + Np, Np)).pow(2));
+        torch::Tensor energyLoss = torch::mean(torch::pow(Hm - totalEnergy, 2));
+        //torch::Tensor momentumLoss = torch::mean((qt.narrow(1, d*Np, d*Np) - dqt.narrow(1, 0, d*Np)).pow(2));
+        torch::Tensor momentumLoss = torch::mean(qt.narrow(1, 3*Np, Np).sum(1).pow(2) +
+                                                 qt.narrow(1, (3*Np)+Np, Np).sum(1).pow(2) +
+                                                 qt.narrow(1, (3*Np)+2*Np, Np).sum(1).pow(2));
+
+        torch::Tensor loss = 20*icfsLoss + energyLoss + momentumLoss;
+
+        loss.backward();
+        torch::Tensor grads = params.grad();
+        params.set_requires_grad(false);
+
+        return std::make_tuple(grads, loss, icfsLoss, eq, energyLoss, momentumLoss);
+    }
+};
 
 int main(int argc, char **argv) {
 

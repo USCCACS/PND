@@ -2,22 +2,19 @@
 // Created by USCCACS02 on 8/5/20.
 //
 
-#include "../MD_Engine/pmd.cpp"
 #include "../Source/pingu.cpp"
 #include "scratch_pad.hpp"
 
-class ScratchPad: Pingu {
+class ScratchPad: public Pingu {
 
+public:
     SubSystem checkPointState;
 
     void setCheckPoint(SubSystem checkPointState) {
         this->checkPointState = checkPointState;
     }
 
-    std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor,
-            torch::Tensor, torch::Tensor> Loss(torch::Tensor t_seq,
-                                               std::tuple<torch::Tensor, torch::Tensor, torch::Tensor,
-                                                       torch::Tensor> icfs, torch::Tensor totalEnergy, int n, int Np, int d) {
+    std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> Loss(torch::Tensor t_seq, std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs, torch::Tensor totalEnergy, int n, int Np, int d) {
         params.set_requires_grad(true);
         //    totalEnergy.set_requires_grad(true);
         //    t_seq.set_requires_grad(false);
@@ -73,6 +70,31 @@ class ScratchPad: Pingu {
 
         return std::make_tuple(grads, loss, icfsLoss, eq, energyLoss, momentumLoss);
     }
+
+    std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> UpdateParamsNADAM(SubSystem checkPointState, torch::Tensor t_seq, torch::Tensor params,
+                                                                                             std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs, torch::Tensor velocities,
+                                                                                             torch::Tensor S, torch::Tensor totalEnergy, int epoch, int n, int Np, int d, double alpha, double epsilon, torch::Tensor beta) {
+
+        epoch += 1;
+        torch::Tensor tmp_beta = torch::pow(beta, epoch);
+        std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> fromTrain = Loss(checkPointState, params, t_seq, icfs, totalEnergy, n, Np, d);
+        torch::Tensor grads = std::get<0>(fromTrain);
+        torch::Tensor loss = std::get<1>(fromTrain);
+        if((epoch)%1000 == 0)cout << "loss in main epoch " << epoch << " : " << loss <<
+                                  std::get<2>(fromTrain) << endl << std::get<3>(fromTrain) <<  endl <<
+                                  std::get<4>(fromTrain) << endl << std::get<5>(fromTrain) << endl ;
+
+        torch::Tensor v1 = beta[0].item<double>() * velocities;
+        torch::Tensor v2 = (1 - beta[0].item<double>()) * grads;
+        velocities = v1 + v2;
+        torch::Tensor velocities_t = velocities / (1 - tmp_beta[0]);
+        S = beta[1]*S + (1-beta[1])*(torch::pow(grads, 2));
+        torch::Tensor S_t = alpha / (torch::sqrt(S/(1 - tmp_beta[1])) + epsilon);
+        params = params - (S_t * (beta[0] * velocities_t + (1-beta[0]) / (1 - tmp_beta[0]) * grads));
+
+        return std::make_tuple(params, velocities, S, loss);
+    }
+
 };
 
 int main(int argc, char **argv) {
@@ -84,7 +106,7 @@ int main(int argc, char **argv) {
     cout << "nglob = " << subsystem.nglob << endl;
     int Np = subsystem.atoms.size();
 
-    Pingu pingu = Pingu();
+    ScratchPad pingu = ScratchPad();
     pingu.defineParams(Np);
 
     vector<float> t_seq_vect;
@@ -140,6 +162,8 @@ int main(int argc, char **argv) {
             checkPointState = subsystem;
         }
     }
+
+    pingu.setCheckPoint(checkPointState);
 
     int numberOfTimeSequences = t_seq_vect.size();
     torch::Tensor t_seq_entire = torch::from_blob(t_seq_vect.data(), {numberOfTimeSequences, 1});
@@ -299,29 +323,6 @@ std::pair<torch::Tensor, torch::Tensor> mainTrain(SubSystem checkPointState, tor
     return std::make_pair(params, loss);
 }
 
-std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> UpdateParamsNADAM(SubSystem checkPointState, torch::Tensor t_seq, torch::Tensor params,
-                                                                                         std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs, torch::Tensor velocities,
-                                                                                         torch::Tensor S, torch::Tensor totalEnergy, int epoch, int n, int Np, int d, double alpha, double epsilon, torch::Tensor beta) {
-
-    epoch += 1;
-    torch::Tensor tmp_beta = torch::pow(beta, epoch);
-    std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> fromTrain = Loss(checkPointState, params, t_seq, icfs, totalEnergy, n, Np, d);
-    torch::Tensor grads = std::get<0>(fromTrain);
-    torch::Tensor loss = std::get<1>(fromTrain);
-    if((epoch)%1000 == 0)cout << "loss in main epoch " << epoch << " : " << loss <<
-                              std::get<2>(fromTrain) << endl << std::get<3>(fromTrain) <<  endl <<
-                              std::get<4>(fromTrain) << endl << std::get<5>(fromTrain) << endl ;
-
-    torch::Tensor v1 = beta[0].item<double>() * velocities;
-    torch::Tensor v2 = (1 - beta[0].item<double>()) * grads;
-    velocities = v1 + v2;
-    torch::Tensor velocities_t = velocities / (1 - tmp_beta[0]);
-    S = beta[1]*S + (1-beta[1])*(torch::pow(grads, 2));
-    torch::Tensor S_t = alpha / (torch::sqrt(S/(1 - tmp_beta[1])) + epsilon);
-    params = params - (S_t * (beta[0] * velocities_t + (1-beta[0]) / (1 - tmp_beta[0]) * grads));
-
-    return std::make_tuple(params, velocities, S, loss);
-}
 
 std::tuple<float, torch::Tensor> LJ3D(SubSystem &predictedSystem, torch::Tensor qt, int Np) {
 //    qt.set_requires_grad(false);

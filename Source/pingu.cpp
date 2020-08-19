@@ -7,8 +7,8 @@
 #include <numeric>
 #include <vector>
 #include <random>
-#include "mpi.h"
 #include "pingu.hpp"
+#include "mpi.h"
 #include <chrono>
 #include <set>
 
@@ -91,18 +91,18 @@ std::pair<torch::Tensor, torch::Tensor> Pingu::LossPreTrain(torch::Tensor t_seq,
     return std::make_pair(grads, loss);
 }
 
- std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> Pingu::Loss(
+std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> Pingu::Loss(
         torch::Tensor t_seq, std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs,
         torch::Tensor totalEnergy, int n, int Np, int d) { }
 
 
 std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> Pingu::UpdatePreParamsNADAM(torch::Tensor t_seq,
-        torch::Tensor params, std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs,
+        std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs,
         torch::Tensor velocities, torch::Tensor S, int epoch, int n, int Np, int d,
         double alpha, double epsilon, torch::Tensor beta) {
     epoch += 1;
     torch::Tensor tmp_beta = torch::pow(beta, epoch);
-    std::pair<torch::Tensor, torch::Tensor> fromLossPreTrain = LossPreTrain(params, t_seq, icfs, n, Np, d);
+    std::pair<torch::Tensor, torch::Tensor> fromLossPreTrain = LossPreTrain(t_seq, icfs, n, Np, d);
     torch::Tensor grads = fromLossPreTrain.first;
     torch::Tensor meanLoss = fromLossPreTrain.second;
     torch::Tensor v1 = beta[0].item<double>() * velocities;
@@ -116,14 +116,14 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> Pingu::Up
     return std::make_tuple(params, velocities, S, meanLoss);
 }
 
-std::pair<torch::Tensor, torch::Tensor> Pingu::PreTrain(torch::Tensor params, torch::Tensor t_seq,
+std::pair<torch::Tensor, torch::Tensor> Pingu::PreTrain(torch::Tensor t_seq,
         std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs,
         int num_epochs, int n, int Np, int d, double learn_rate, double momentum) {
     torch::Tensor velocities = torch::zeros(params.sizes());
     torch::Tensor S = torch::zeros(params.sizes());
     torch::Tensor meanLoss;
     for (int epoch = 0; epoch < num_epochs; ++epoch) {
-        auto values = UpdatePreParamsNADAM(t_seq, params, icfs, velocities, S, epoch, n, Np, d);
+        auto values = UpdatePreParamsNADAM(t_seq, icfs, velocities, S, epoch, n, Np, d);
         params = std::get<0>(values);
         velocities = std::get<1>(values);
         S = std::get<2>(values);

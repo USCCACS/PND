@@ -71,13 +71,13 @@ public:
         return std::make_tuple(grads, loss, icfsLoss, eq, energyLoss, momentumLoss);
     }
 
-    std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> UpdateParamsNADAM(torch::Tensor t_seq, torch::Tensor params,
+    std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> UpdateParamsNADAM(torch::Tensor t_seq,
                                                                                              std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs, torch::Tensor velocities,
                                                                                              torch::Tensor S, torch::Tensor totalEnergy, int epoch, int n, int Np, int d, double alpha, double epsilon, torch::Tensor beta) {
 
         epoch += 1;
         torch::Tensor tmp_beta = torch::pow(beta, epoch);
-        std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> fromTrain = Loss(checkPointState, params, t_seq, icfs, totalEnergy, n, Np, d);
+        std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> fromTrain = Loss(t_seq, icfs, totalEnergy, n, Np, d);
         torch::Tensor grads = std::get<0>(fromTrain);
         torch::Tensor loss = std::get<1>(fromTrain);
         if((epoch)%1000 == 0)cout << "loss in main epoch " << epoch << " : " << loss <<
@@ -95,11 +95,12 @@ public:
         return std::make_tuple(params, velocities, S, loss);
     }
 
-    std::pair<torch::Tensor, torch::Tensor> mainTrain(SubSystem checkPointState, torch::Tensor params, torch::Tensor t_seq,
+    std::pair<torch::Tensor, torch::Tensor> mainTrain(torch::Tensor params, torch::Tensor t_seq,
                                                       std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs,
                                                       int num_epochs, torch::Tensor totalEnergy, int n, int Np, int d, double learn_rate, double momentum) {
-        torch::Tensor velocities = torch::zeros(params.sizes());
-        torch::Tensor S = torch::zeros(params.sizes());
+        this->params = params;
+        torch::Tensor velocities = torch::zeros(this->params.sizes());
+        torch::Tensor S = torch::zeros(this->params.sizes());
         torch::Tensor loss;
 //    velocities.set_requires_grad(false);
 //    S.set_requires_grad(false);
@@ -109,7 +110,8 @@ public:
 
         auto start = std::chrono::high_resolution_clock::now();
         for (int epoch = 0; epoch < num_epochs; ++epoch) {
-            auto values = UpdateParamsNADAM(checkPointState, t_seq, params, icfs, velocities, S, totalEnergy, epoch, n, Np, d);
+            auto values = UpdateParamsNADAM(t_seq, icfs, velocities, S, totalEnergy, epoch, n, Np, d, 0.001, pow(10,-7),
+                    torch::tensor({0.999, 0.999}));
             params = std::get<0>(values);
             velocities = std::get<1>(values);
             S = std::get<2>(values);
@@ -135,6 +137,7 @@ public:
 
 int main(int argc, char **argv) {
 
+    MPI_Init(&argc, &argv); // Initialize the MPI environment
     // Create Subsystem based on input
     SubSystem subsystem = SubSystem();
     SubSystem checkPointState;
@@ -284,7 +287,7 @@ int main(int argc, char **argv) {
     // Store results from md only for the steps after pre-train steps for main-train purpose
     md_qt = positionsAndVelocitiesOverTimeSteps.narrow(0, subsystem.StepLimit, pingu.StepTrain);
 
-    auto mainTrainLossValues = pingu.mainTrain(checkPointState, preTrainLossValues.first, t_seq, icfs, pingu.MainTrainEpochs, totalEnergy, pingu.nodes, Np, 3);
+    auto mainTrainLossValues = pingu.mainTrain(preTrainLossValues.first, t_seq, icfs, pingu.MainTrainEpochs, totalEnergy, pingu.nodes, Np, 3, 0.0001, 0.99);
     cout << "main train loss value: " << mainTrainLossValues.second <<endl;
     // Get the new weights
     pingu.params = mainTrainLossValues.first;
@@ -350,8 +353,8 @@ std::tuple<float, torch::Tensor> LJ3D(SubSystem &predictedSystem, torch::Tensor 
 std::tuple<torch::Tensor, torch::Tensor> LJ3D_M(SubSystem checkPointState, torch::Tensor qt, int Np) {
 //    qt.set_requires_grad(false);
 
-    int sid;
-    MPI_Comm_rank(MPI_COMM_WORLD, &sid);
+//    int sid;
+//    MPI_Comm_rank(MPI_COMM_WORLD, &sid);
     SubSystem predictedSystem = checkPointState;
     std::vector<torch::Tensor> positionsAlongTime = torch::chunk(qt, qt.sizes()[0], 0);
     int count = 1;

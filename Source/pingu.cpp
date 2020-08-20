@@ -14,7 +14,6 @@
 
 using namespace std;
 
-const double RCUT = 2.5; // Potential cut-off length
 int movedAtoms = 0;
 
 Pingu::Pingu() {
@@ -133,7 +132,7 @@ std::pair<torch::Tensor, torch::Tensor> Pingu::PreTrain(torch::Tensor t_seq,
 }
 
 std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor>
-Pingu::UpdateParamsNADAM(torch::Tensor t_seq, torch::Tensor params,
+Pingu::UpdateParamsNADAM(torch::Tensor t_seq,
                          std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs,
                          torch::Tensor velocities, torch::Tensor S, torch::Tensor totalEnergy, int epoch, int n, int Np,
                          int d, double alpha, double epsilon, torch::Tensor beta) {}

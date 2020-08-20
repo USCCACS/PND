@@ -24,7 +24,6 @@ Atom::Atom()
 SubSystem::SubSystem(): pid(0), n(0), nglob(0), comt(0.0), al{}, vid{}, myparity{}, nn{}, sv{}, vSum{}, gvSum{}, atoms{}, kinEnergy(0.0), potEnergy(0.0), totEnergy(0.0), temperature(0) {
 
     int pid; // Sequential processor ID
-    MPI_Init(NULL, NULL); // Initialize the MPI environment
     MPI_Comm_rank(MPI_COMM_WORLD, &pid);  // My processor ID
 
     // Open pmd.in file and read inputs

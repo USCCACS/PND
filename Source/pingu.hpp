@@ -24,7 +24,7 @@ public:
             std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs,
             torch::Tensor totalEnergy, int n, int Np, int d);
 
-    virtual std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> UpdateParamsNADAM(torch::Tensor t_seq, torch::Tensor params,
+    virtual std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> UpdateParamsNADAM(torch::Tensor t_seq,
                                                                                                      std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs, torch::Tensor velocities,
                                                                                                      torch::Tensor S, torch::Tensor totalEnergy, int epoch, int n, int Np, int d, double alpha, double epsilon, torch::Tensor beta);
 

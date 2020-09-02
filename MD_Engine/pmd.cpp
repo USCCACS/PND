@@ -397,7 +397,7 @@ vector<int> SubSystem::AtomMove() {
                 sendBuf.push_back(atoms[*it_index].vz);
 
                 // TODO: Send the flag here specifying atom has moved. Also send the correct index vector
-
+//                sendBuf.push_back(ku);
                 // if(pid == 0) cout << "move - " << atoms[*it_index].x << " ";
                 // if(pid ==0) cout << atoms[*it_index].y << " ";
                 // if(pid ==0) cout << atoms[*it_index].z << " " << endl;
@@ -446,6 +446,7 @@ vector<int> SubSystem::AtomMove() {
                 for (unsigned i = 0; i < atoms.size(); i++) {
                     if (atoms[i].x <= MOVED_OUT) {
                         atoms[i] = rAtom;
+                        atoms[i].hasMovedIn = true;
                         boundaryCrossingAtomIndices.push_back(i);
                         break;
                     }

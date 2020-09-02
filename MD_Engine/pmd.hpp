@@ -23,7 +23,10 @@ public:
 
     double vx;        // velocity on x axis
     double vy;        // velocity on y axis
-    double vz;            // velocity on y axis
+    double vz;        // velocity on y axis
+
+    bool hasMovedIn;  // Identify is atom has moved in from neighbor cell
+    std::vector<std::vector<int> > iv; // Store integer vector of the atom
     // Default constructor
     Atom();
 };

@@ -17,7 +17,7 @@ const double MOVED_OUT = -1.0e10;
 
 Atom::Atom()
         : type(0), isResident(true), x(0.0), y(0.0), z(0.0),
-          ax(0.0), ay(0.0), az(0.0), vx(0.0), vy(0.0), vz(0.0) {}
+          ax(0.0), ay(0.0), az(0.0), vx(0.0), vy(0.0), vz(0.0), hasMovedIn(false), iv{}  {}
 
 /* Create subsystem with parameters input parameters to calculate
    the number of atoms and give them random velocities */
@@ -309,6 +309,7 @@ vector<int> SubSystem::AtomMove() {
 
     atoms.erase(remove_if(atoms.begin(), atoms.end(), [](Atom atom) { return !atom.isResident; }), atoms.end());
     //atoms.resize(n);
+
     /* Main loop over x, y & z directions starts------------------------*/
 
     for (kd = 0; kd < 3; kd++) {
@@ -321,14 +322,14 @@ vector<int> SubSystem::AtomMove() {
             kuh = 2 * kd + 1;
             /* Register a to-be-copied atom in mvque[kul|kuh][] */
 
-            /* Move to the lower direction */
             i = distance(atoms.begin(), it_atom);
             if (it_atom->x > MOVED_OUT) {
+                /* Move to the lower direction */
                 if (bmv(*it_atom, kul)) {
                     mvque[kul].push_back(i);
                     // if(pid == 0) cout << "Tested positive for move " << it_atom->x << " " << it_atom->z << " " << it_atom->y << endl;
                 }
-                    /* Move to the higher direction */
+                /* Move to the higher direction */
                 else if (bmv(*it_atom, kuh)) {
                     mvque[kuh].push_back(i);
                     // if(pid == 0) cout << "Tested positive for move " << it_atom->x << " " << it_atom->z << " " << it_atom->y << endl;}
@@ -394,6 +395,8 @@ vector<int> SubSystem::AtomMove() {
                 sendBuf.push_back(atoms[*it_index].vx);
                 sendBuf.push_back(atoms[*it_index].vy);
                 sendBuf.push_back(atoms[*it_index].vz);
+
+                // TODO: Send the flag here specifying atom has moved. Also send the correct index vector
 
                 // if(pid == 0) cout << "move - " << atoms[*it_index].x << " ";
                 // if(pid ==0) cout << atoms[*it_index].y << " ";

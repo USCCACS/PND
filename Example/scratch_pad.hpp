@@ -8,14 +8,16 @@
 #include <torch/torch.h>
 #include "../MD_Engine/pmd.cpp"
 
-double ComputeAccel(SubSystem&);
-std::tuple<float, torch::Tensor> ComputeAccelPredicted(SubSystem&);
+double ComputeAccel(SubSystem &);
+
+std::tuple<float, torch::Tensor> ComputeAccelPredicted(SubSystem &);
+
 std::vector<int> SingleStep(SubSystem &subsystem);
 
 // Similar to LJ2D_M function but works in a sing;e time splice to return the PE
-std::tuple<float, torch::Tensor> LJ3D(SubSystem&, torch::Tensor, int Np);
+std::tuple<float, torch::Tensor> LJ3D(SubSystem &, torch::Tensor, int Np);
 
 // Same as LJ2D_M but calls LJ3D_M in each time splice
-std::tuple<torch::Tensor, torch::Tensor> LJ3D_M(SubSystem checkPointState , torch::Tensor, int Np);
+std::tuple<torch::Tensor, torch::Tensor> LJ3D_M(SubSystem checkPointState, torch::Tensor, int Np);
 
 #endif //DSN_MD_SCRATCH_PAD_HPP

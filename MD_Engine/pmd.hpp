@@ -8,28 +8,28 @@
 #define D2P31M 2147483647.0
 #define DMUL 16807.0
 
-class Atom{
-  public:
-  double type;          // identifier for atom type
-  bool isResident;
-  
-  double x;		// position in x axis
-  double y;		// position in y axis
-  double z;		// position in y axis
+class Atom {
+public:
+    double type;          // identifier for atom type
+    bool isResident;
 
-  double ax;		// acceleration on x axis
-  double ay;		// acceleration on y axis
-  double az;		// acceleration on y axis
-  
-  double vx;		// velocity on x axis
-  double vy;		// velocity on y axis
-  double vz;            // velocity on y axis
-  // Default constructor
-  Atom(); 
+    double x;        // position in x axis
+    double y;        // position in y axis
+    double z;        // position in y axis
+
+    double ax;        // acceleration on x axis
+    double ay;        // acceleration on y axis
+    double az;        // acceleration on y axis
+
+    double vx;        // velocity on x axis
+    double vy;        // velocity on y axis
+    double vz;            // velocity on y axis
+    // Default constructor
+    Atom();
 };
 
-class SubSystem{
-    public:
+class SubSystem {
+public:
     int pid; //sequential processor ID of this cell
     int n; // Number of resident atoms in this processor
     int nglob; // Total number of atoms summed over processors
@@ -46,7 +46,7 @@ class SubSystem{
     double Density, InitTemp, DeltaT;
     int StepLimit, StepAvg;
 
-    double kinEnergy,potEnergy,totEnergy,temperature;
+    double kinEnergy, potEnergy, totEnergy, temperature;
 
     /* Create subsystem with parameters input parameters to calculate
      the number of atoms and give them random velocities */
@@ -85,15 +85,22 @@ class SubSystem{
         n = (int) (a / b);
         return (a - b * n);
     }
+
     static double RandR(double *seed) {
-        *seed = Dmod(*seed*DMUL,D2P31M);
-        return (*seed/D2P31M);
+        *seed = Dmod(*seed * DMUL, D2P31M);
+        return (*seed / D2P31M);
     }
+
     static void RandVec3(double *p, double *seed) {
-        double x = 0, y = 0,s = 2.0;
+        double x = 0, y = 0, s = 2.0;
         while (s > 1.0) {
-            x = 2.0*RandR(seed) - 1.0; y = 2.0*RandR(seed) - 1.0; s = x*x + y*y;
+            x = 2.0 * RandR(seed) - 1.0;
+            y = 2.0 * RandR(seed) - 1.0;
+            s = x * x + y * y;
         }
-        p[2] = 1.0 - 2.0*s; s = 2.0*sqrt(1.0 - s); p[0] = s*x; p[1] = s*y;
+        p[2] = 1.0 - 2.0 * s;
+        s = 2.0 * sqrt(1.0 - s);
+        p[0] = s * x;
+        p[1] = s * y;
     }
 };

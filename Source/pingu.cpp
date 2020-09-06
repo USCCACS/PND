@@ -14,8 +14,6 @@
 
 using namespace std;
 
-int movedAtoms = 0;
-
 Pingu::Pingu() {
     ifstream ifs;
     ifs.open("pingu.in", ifstream::in);
@@ -61,19 +59,10 @@ std::pair<torch::Tensor, torch::Tensor> Pingu::LossPreTrain(torch::Tensor t_seq,
     torch::Tensor q = torch::matmul(w1, tmp1) + b1;
     torch::Tensor qt = q.transpose(0, 1);
 
-    //loss from intial and final states
+    torch::Tensor trackedAtomsPositions = qt.narrow(1, 0, 3*Np);
+    torch::Tensor trackedAtomsVelocities = qt.narrow(1, 3 * Np, 3*Np);
 
-    torch::Tensor trackedAtomsXPositions = qt.narrow(1, 0, Np - movedAtoms);
-    torch::Tensor trackedAtomsYPositions = qt.narrow(1, 1 * Np, Np - movedAtoms);
-    torch::Tensor trackedAtomsZPositions = qt.narrow(1, 2 * Np, Np - movedAtoms);
-    torch::Tensor trackedAtomsXVelocities = qt.narrow(1, 3 * Np, Np - movedAtoms);
-    torch::Tensor trackedAtomsYVelocities = qt.narrow(1, (3 * Np) + (1 * Np), Np - movedAtoms);
-    torch::Tensor trackedAtomsZVelocities = qt.narrow(1, (3 * Np) + (2 * Np), Np - movedAtoms);
-    torch::Tensor trackedAtomsPositions = torch::cat(
-            {trackedAtomsXPositions, trackedAtomsYPositions, trackedAtomsZPositions}, 1);
-    torch::Tensor trackedAtomsVelocities = torch::cat(
-            {trackedAtomsXVelocities, trackedAtomsYVelocities, trackedAtomsZVelocities}, 1);
-
+    //loss from initial and final states
     torch::Tensor icfsLoss = (trackedAtomsPositions[0] - std::get<0>(icfs)).pow(2).sum();
     icfsLoss += (trackedAtomsPositions[StepTrain - 1] - std::get<1>(icfs)).pow(2).sum();
     icfsLoss += (trackedAtomsVelocities[0] - std::get<2>(icfs)).pow(2).sum();
@@ -88,7 +77,7 @@ std::pair<torch::Tensor, torch::Tensor> Pingu::LossPreTrain(torch::Tensor t_seq,
     loss.backward();
     torch::Tensor grads = params.grad();
     params.set_requires_grad(false);
-//    cout << "End of Pre Train Epoch 1/3 ~~~~~~~~~~~~~~~~~~ " << endl;
+
     return std::make_pair(grads, loss);
 }
 

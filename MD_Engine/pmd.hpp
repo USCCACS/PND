@@ -26,7 +26,7 @@ public:
     double vz;        // velocity on y axis
 
     bool hasMovedIn;  // Identify is atom has moved in from neighbor cell
-    std::vector<std::vector<int> > iv; // Store integer vector of the atom
+    int ku;           // Store neighbor index of the atom if it has moved
     // Default constructor
     Atom();
 };
@@ -70,6 +70,10 @@ public:
     // from neighbor nodes
     // returns the indexes of the atoms that have moved out/moved in
     std::vector<int> AtomMove();
+
+    // Obtain the final position of the atoms by shifting the atom co-ordinates of the moved in-atoms
+    // to the position of the atoms they replace for the time step
+    void ShiftAtoms();
 
     // Return true if an Atom lies in them boundary to a neighbor ID
     int bbd(Atom atom, int ku);

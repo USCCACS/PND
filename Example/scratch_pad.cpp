@@ -30,19 +30,10 @@ public:
         torch::Tensor q = torch::matmul(w1, tmp1) + b1;
         torch::Tensor qt = q.transpose(0, 1);
 
+        torch::Tensor trackedAtomsPositions = qt.narrow(1, 0, 3*Np);
+        torch::Tensor trackedAtomsVelocities = qt.narrow(1, 3 * Np, 3*Np);
+
         //loss from intial and final states
-
-        torch::Tensor trackedAtomsXPositions = qt.narrow(1, 0, Np - movedAtoms);
-        torch::Tensor trackedAtomsYPositions = qt.narrow(1, 1 * Np, Np - movedAtoms);
-        torch::Tensor trackedAtomsZPositions = qt.narrow(1, 2 * Np, Np - movedAtoms);
-        torch::Tensor trackedAtomsXVelocities = qt.narrow(1, 3 * Np, Np - movedAtoms);
-        torch::Tensor trackedAtomsYVelocities = qt.narrow(1, (3 * Np) + (1 * Np), Np - movedAtoms);
-        torch::Tensor trackedAtomsZVelocities = qt.narrow(1, (3 * Np) + (2 * Np), Np - movedAtoms);
-        torch::Tensor trackedAtomsPositions = torch::cat(
-                {trackedAtomsXPositions, trackedAtomsYPositions, trackedAtomsZPositions}, 1);
-        torch::Tensor trackedAtomsVelocities = torch::cat(
-                {trackedAtomsXVelocities, trackedAtomsYVelocities, trackedAtomsZVelocities}, 1);
-
         torch::Tensor icfsLoss = (trackedAtomsPositions[0] - std::get<0>(icfs)).pow(2).sum();
         icfsLoss += (trackedAtomsPositions[StepTrain - 1] - std::get<1>(icfs)).pow(2).sum();
         icfsLoss += (trackedAtomsVelocities[0] - std::get<2>(icfs)).pow(2).sum();
@@ -164,7 +155,6 @@ int main(int argc, char **argv) {
 
     vector<float> t_seq_vect;
     torch::Tensor positionsAndVelocitiesOverTimeSteps;
-    vector<vector<int> > boundaryCrossingAtomIndicesOverTimeSteps;
     torch::Tensor totalEnergy;
 
     for (int stepCount = 1; stepCount <= subsystem.StepLimit + pingu.StepTrain; stepCount++) {
@@ -177,7 +167,7 @@ int main(int argc, char **argv) {
                 z_vect.push_back(it_atom->z);
             }
         }
-        boundaryCrossingAtomIndices = SingleStep(subsystem);
+        SingleStep(subsystem);
         subsystem.EvalProps(stepCount);
         // use WriteXYZ(frame suffix) from SubSystem to print frames
         if (stepCount >= subsystem.StepLimit) subsystem.WriteXYZ(stepCount);
@@ -203,7 +193,7 @@ int main(int argc, char **argv) {
                  torch::from_blob(&vx_vect[0], {1, numberOfAtoms}),
                  torch::from_blob(&vy_vect[0], {1, numberOfAtoms}),
                  torch::from_blob(&vz_vect[0], {1, numberOfAtoms})}, 1);
-        boundaryCrossingAtomIndicesOverTimeSteps.push_back(boundaryCrossingAtomIndices);
+
         if (stepCount == 1) {
             positionsAndVelocitiesOverTimeSteps = positionsAndVelocitiesPerTimeStep;
         } else {
@@ -215,6 +205,8 @@ int main(int argc, char **argv) {
             totalEnergy = torch::tensor({totalEnergyFloat});
             checkPointState = subsystem;
         }
+
+
     }
 
     pingu.setCheckPoint(checkPointState);
@@ -225,68 +217,21 @@ int main(int argc, char **argv) {
     // Store results from md only for the steps after warm-up steps for pre-train purpose
     torch::Tensor md_qt = positionsAndVelocitiesOverTimeSteps.narrow(0, subsystem.StepLimit, pingu.StepTrain);
     torch::Tensor t_seq = t_seq_entire.narrow(0, subsystem.StepLimit, pingu.StepTrain);
-
+    cout << "obtained md positions and velocities matrix" << endl;
     // Set initial weights
     //    torch::Tensor w0b0_params = torch::ones({2*n, 1});
     //    torch::Tensor b1_params = md_qt[0].unsqueeze(1);
     //    torch::Tensor w1_params = torch::rand({2*n*3*Np, 1});
     //    torch::Tensor params = torch::cat({w0b0_params, w1_params, b1_params}, 0);
-
-    // Keep atom indexes that have moved only after the warmup steps
-    boundaryCrossingAtomIndicesOverTimeSteps.erase(boundaryCrossingAtomIndicesOverTimeSteps.begin(),
-                                                   boundaryCrossingAtomIndicesOverTimeSteps.begin() +
-                                                   subsystem.StepLimit);
-    torch::Tensor qx1, qx2, qx3, px1, px2, px3, qy1, qy2, qy3, py1, py2, py3, qz1, qz2, qz3, pz1, pz2, pz3;
-    set<int, std::greater<int> > boundaryCrossingAtomIndicesSet;
-    for (vector<int> atomIndicesndices : boundaryCrossingAtomIndicesOverTimeSteps) {
-        for (int atomIndex: atomIndicesndices) {
-            boundaryCrossingAtomIndicesSet.insert(atomIndex);
-        }
-    }
-    for (int atomIndex : boundaryCrossingAtomIndicesSet) {
-//        cout << atomIndex << endl;
-        qx1 = md_qt.narrow(1, 0, atomIndex);
-        qx2 = md_qt.narrow(1, atomIndex, 1);
-        qx3 = md_qt.narrow(1, atomIndex + 1, (Np) - (atomIndex + 1));
-        px1 = md_qt.narrow(1, 3 * Np, atomIndex);
-        px2 = md_qt.narrow(1, 3 * Np + atomIndex, 1);
-        px3 = md_qt.narrow(1, 3 * Np + atomIndex + 1, (Np) - (atomIndex + 1));
-
-        qy1 = md_qt.narrow(1, Np + 0, atomIndex);
-        qy2 = md_qt.narrow(1, Np + atomIndex, 1);
-        qy3 = md_qt.narrow(1, Np + atomIndex + 1, (Np) - (atomIndex + 1));
-        py1 = md_qt.narrow(1, 3 * Np + Np, atomIndex);
-        py2 = md_qt.narrow(1, 3 * Np + Np + atomIndex, 1);
-        py3 = md_qt.narrow(1, 3 * Np + Np + atomIndex + 1, (Np) - (atomIndex + 1));
-
-        qz1 = md_qt.narrow(1, 2 * Np + 0, atomIndex);
-        qz2 = md_qt.narrow(1, 2 * Np + atomIndex, 1);
-        qz3 = md_qt.narrow(1, 2 * Np + atomIndex + 1, (Np) - (atomIndex + 1));
-        pz1 = md_qt.narrow(1, 3 * Np + 2 * Np, atomIndex);
-        pz2 = md_qt.narrow(1, 3 * Np + 2 * Np + atomIndex, 1);
-        pz3 = md_qt.narrow(1, 3 * Np + 2 * Np + atomIndex + 1, (Np) - (atomIndex + 1));
-
-        md_qt = torch::cat({qx1, qx3, qx2, qy1, qy3, qy2, qz1, qz3, qz2,
-                            px1, px3, px2, py1, py3, py2, pz1, pz3, pz2}, 1);
-    }
-//    cout << "after concatenating \n" << md_qt << endl;
-
     // Set the inital and final values
-    movedAtoms = boundaryCrossingAtomIndicesSet.size();
-    torch::Tensor trackedAtomsXPositions = md_qt.narrow(1, 0, Np - movedAtoms);
-    torch::Tensor trackedAtomsYPositions = md_qt.narrow(1, Np, Np - movedAtoms);
-    torch::Tensor trackedAtomsZPositions = md_qt.narrow(1, 2 * Np, Np - movedAtoms);
-    torch::Tensor trackedAtomsXVelocities = md_qt.narrow(1, 3 * Np, Np - movedAtoms);
-    torch::Tensor trackedAtomsYVelocities = md_qt.narrow(1, (3 * Np) + Np, Np - movedAtoms);
-    torch::Tensor trackedAtomsZVelocities = md_qt.narrow(1, (3 * Np) + (2 * Np), Np - movedAtoms);
-    torch::Tensor trackedAtomsPositions = torch::cat(
-            {trackedAtomsXPositions, trackedAtomsYPositions, trackedAtomsZPositions}, 1);
-    torch::Tensor trackedAtomsVelocities = torch::cat(
-            {trackedAtomsXVelocities, trackedAtomsYVelocities, trackedAtomsZVelocities}, 1);
-    torch::Tensor initialPositions = trackedAtomsPositions[0];
-    torch::Tensor finalPositions = trackedAtomsPositions[pingu.StepTrain - 1];
-    torch::Tensor initialVelocities = trackedAtomsVelocities[0];
-    torch::Tensor finalVelocities = trackedAtomsVelocities[pingu.StepTrain - 1];
+    torch::Tensor initialPositions = md_qt.narrow(1, 0, 3*Np)[0];
+    cout << "obtained initial positions" << endl;
+    torch::Tensor finalPositions = md_qt.narrow(1, 0, 3*Np)[pingu.StepTrain - 1];
+    cout << "obtained final positions" << endl;
+    torch::Tensor initialVelocities = md_qt.narrow(1, 3 * Np, 3*Np)[0];
+    cout << "obtained initial velocities" << endl;
+    torch::Tensor finalVelocities = md_qt.narrow(1, 3 * Np, 3*Np)[pingu.StepTrain - 1];
+    cout << "obtained final velocities" << endl;
 
     std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs =
             std::make_tuple(initialPositions, finalPositions, initialVelocities, finalVelocities);

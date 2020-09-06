@@ -17,7 +17,7 @@ const double MOVED_OUT = -1.0e10;
 
 Atom::Atom()
         : type(0), isResident(true), x(0.0), y(0.0), z(0.0),
-          ax(0.0), ay(0.0), az(0.0), vx(0.0), vy(0.0), vz(0.0), hasMovedIn(false), iv{}  {}
+          ax(0.0), ay(0.0), az(0.0), vx(0.0), vy(0.0), vz(0.0), hasMovedIn(false), ku{}  {}
 
 /* Create subsystem with parameters input parameters to calculate
    the number of atoms and give them random velocities */
@@ -396,37 +396,40 @@ vector<int> SubSystem::AtomMove() {
                 sendBuf.push_back(atoms[*it_index].vy);
                 sendBuf.push_back(atoms[*it_index].vz);
 
-                // TODO: Send the flag here specifying atom has moved. Also send the correct index vector
-//                sendBuf.push_back(ku);
+                // Send the neighbor index of the cell that will receive the atom
+                sendBuf.push_back(ku);
                 // if(pid == 0) cout << "move - " << atoms[*it_index].x << " ";
                 // if(pid ==0) cout << atoms[*it_index].y << " ";
                 // if(pid ==0) cout << atoms[*it_index].z << " " << endl;
                 //atoms[*it_index].isResident = false;
+
                 // Mark the atom as moved out
                 atoms[*it_index].x = MOVED_OUT;
+                // Specify the neighbor index of move-out
+                atoms[*it_index].ku = ku;
             }
 
             // resize the receive buffer for nrc
-            recvBuf.resize(7 * nrc);
+            recvBuf.resize(8 * nrc);
 
             /* Even node: send & recv */
             if (myparity[kd] == 0) {
-                MPI_Send(&sendBuf[0], 7 * nsd, MPI_DOUBLE, inode, 20, MPI_COMM_WORLD);
-                MPI_Recv(&recvBuf[0], 7 * nrc, MPI_DOUBLE, MPI_ANY_SOURCE, 20,
+                MPI_Send(&sendBuf[0], 8 * nsd, MPI_DOUBLE, inode, 20, MPI_COMM_WORLD);
+                MPI_Recv(&recvBuf[0], 8 * nrc, MPI_DOUBLE, MPI_ANY_SOURCE, 20,
                          MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             }
                 /* Odd node: recv & send */
             else if (myparity[kd] == 1) {
-                MPI_Recv(&recvBuf[0], 7 * nrc, MPI_DOUBLE, MPI_ANY_SOURCE, 20,
+                MPI_Recv(&recvBuf[0], 8 * nrc, MPI_DOUBLE, MPI_ANY_SOURCE, 20,
                          MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                MPI_Send(&sendBuf[0], 7 * nsd, MPI_DOUBLE, inode, 20, MPI_COMM_WORLD);
+                MPI_Send(&sendBuf[0], 8 * nsd, MPI_DOUBLE, inode, 20, MPI_COMM_WORLD);
             }
                 /* Single layer: Exchange information with myself */
             else
                 sendBuf.swap(recvBuf);
 
             // Message storing
-            for (i = 0; i < 7 * nrc; i++) {
+            for (i = 0; i < 8 * nrc; i++) {
                 Atom rAtom;
 
                 rAtom.type = recvBuf[i];
@@ -443,10 +446,12 @@ vector<int> SubSystem::AtomMove() {
                 rAtom.vy = recvBuf[i];
                 ++i;
                 rAtom.vz = recvBuf[i];
+                ++i;
+                rAtom.hasMovedIn = true;
+                rAtom.ku = recvBuf[i];
                 for (unsigned i = 0; i < atoms.size(); i++) {
-                    if (atoms[i].x <= MOVED_OUT) {
+                    if (atoms[i].x == MOVED_OUT && atoms[i].ku == rAtom.ku) {
                         atoms[i] = rAtom;
-                        atoms[i].hasMovedIn = true;
                         boundaryCrossingAtomIndices.push_back(i);
                         break;
                     }
@@ -474,6 +479,17 @@ vector<int> SubSystem::AtomMove() {
 
     return boundaryCrossingAtomIndices;
 
+}
+
+void SubSystem::ShiftAtoms() {
+    for (auto &atom : atoms) {
+        if(atom.hasMovedIn) {
+            atom.x = atom.x - sv[atom.ku][0];
+            atom.y = atom.y - sv[atom.ku][1];
+            atom.z = atom.z - sv[atom.ku][2];
+
+        }
+    }
 }
 
 // Return true if an Atom lies in the boundary to a neighbor ID

@@ -25,8 +25,7 @@ public:
     double vy;        // velocity on y axis
     double vz;        // velocity on y axis
 
-    bool hasMovedIn;  // Identify is atom has moved in from neighbor cell
-    int ku;           // Store neighbor index of the atom if it has moved
+    std::array<int, 6> shiftCount; // Track the cells that the atom has moved
     // Default constructor
     Atom();
 };

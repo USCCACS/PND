@@ -320,6 +320,7 @@ std::tuple<float, torch::Tensor> LJ3D(SubSystem &predictedSystem, torch::Tensor 
             it_atom->z = positionsAlongAxis[2][index_pt].item<double>();
         }
     }
+    predictedSystem.WrapAtoms();
     double DeltaTH = predictedSystem.DeltaT / 2.0;
     predictedSystem.Kick(DeltaTH); /* First half kick to obtain v(t+Dt/2) */
     predictedSystem.Update(predictedSystem.DeltaT);

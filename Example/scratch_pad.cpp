@@ -160,11 +160,23 @@ int main(int argc, char **argv) {
     for (int stepCount = 1; stepCount <= subsystem.StepLimit + pingu.StepTrain; stepCount++) {
         vector<float> x_vect, y_vect, z_vect;
         vector<int> boundaryCrossingAtomIndices;
-        for (auto it_atom = subsystem.atoms.begin(); it_atom != subsystem.atoms.end(); ++it_atom) {
-            if (it_atom->isResident) {
-                x_vect.push_back(it_atom->x);
-                y_vect.push_back(it_atom->y);
-                z_vect.push_back(it_atom->z);
+        if(stepCount == subsystem.StepLimit + pingu.StepTrain) {
+            SubSystem finalState = subsystem;
+            finalState.ShiftAtoms();
+            for (auto it_atom = finalState.atoms.begin(); it_atom != finalState.atoms.end(); ++it_atom) {
+                if (it_atom->isResident) {
+                    x_vect.push_back(it_atom->x);
+                    y_vect.push_back(it_atom->y);
+                    z_vect.push_back(it_atom->z);
+                }
+            }
+        } else {
+            for (auto it_atom = subsystem.atoms.begin(); it_atom != subsystem.atoms.end(); ++it_atom) {
+                if (it_atom->isResident) {
+                    x_vect.push_back(it_atom->x);
+                    y_vect.push_back(it_atom->y);
+                    z_vect.push_back(it_atom->z);
+                }
             }
         }
         SingleStep(subsystem);
@@ -228,6 +240,8 @@ int main(int argc, char **argv) {
     cout << "obtained initial positions" << endl;
     torch::Tensor finalPositions = md_qt.narrow(1, 0, 3*Np)[pingu.StepTrain - 1];
     cout << "obtained final positions" << endl;
+//    cout << "Final positions are: " << finalPositions << endl;
+//    cout << "pen ultimate positions are: " << md_qt.narrow(1, 0, 3*Np)[pingu.StepTrain - 2] << endl;
     torch::Tensor initialVelocities = md_qt.narrow(1, 3 * Np, 3*Np)[0];
     cout << "obtained initial velocities" << endl;
     torch::Tensor finalVelocities = md_qt.narrow(1, 3 * Np, 3*Np)[pingu.StepTrain - 1];

@@ -499,6 +499,78 @@ void SubSystem::ShiftAtoms() {
     }
 }
 
+void SubSystem::WrapAtoms() {
+    vector<vector<int> > mvque(6);
+    int ku, kd, i, kdd, kul, kuh, inode, nsd, nrc;
+    double com1 = 0;
+
+    //atoms.resize(n);
+
+    /* Main loop over x, y & z directions starts------------------------*/
+
+    for (kd = 0; kd < 3; kd++) {
+
+        /* Make a moved-atom list, mvque----------------------------------*/
+
+        /* Scan all the residents & immigrants to list moved-out atoms */
+        for (auto it_atom = atoms.begin(); it_atom != atoms.end(); ++it_atom) {
+            kul = 2 * kd; /* Neighbor ID */
+            kuh = 2 * kd + 1;
+            /* Register a to-be-copied atom in mvque[kul|kuh][] */
+
+            i = distance(atoms.begin(), it_atom);
+            if (it_atom->x > MOVED_OUT) {
+                /* Move to the lower direction */
+                if (bmv(*it_atom, kul)) {
+                    mvque[kul].push_back(i);
+                    // if(pid == 0) cout << "Tested positive for move " << it_atom->x << " " << it_atom->z << " " << it_atom->y << endl;
+                }
+                    /* Move to the higher direction */
+                else if (bmv(*it_atom, kuh)) {
+                    mvque[kuh].push_back(i);
+                    // if(pid == 0) cout << "Tested positive for move " << it_atom->x << " " << it_atom->z << " " << it_atom->y << endl;}
+                }
+            }
+
+        }
+
+        /* Message passing------------------------------------------------*/
+
+        com1 = MPI_Wtime(); /* To calculate the communication time */
+
+        /* Loop over the lower & higher directions */
+        for (kdd = 0; kdd < 2; kdd++) {
+            // if(pid ==0) cout << "kdd " << kdd << endl;
+            vector<double> sendBuf;
+            vector<double> recvBuf;
+
+            ku = 2 * kd + kdd;
+            // if(pid ==0) cout << "ku = " << ku << endl;
+            inode = nn[ku]; /* Neighbor node ID */
+            // if(pid == 0) cout << "inode = " << inode << endl;
+
+            nsd = mvque[ku].size();
+
+            nrc = nsd;
+
+            /* Message buffering */
+            for (auto it_index = mvque[ku].begin(); it_index != mvque[ku].end(); ++it_index) {
+                // Specify the neighbor index of move-out
+                atoms[*it_index].shiftCount[ku]++;
+
+                sendBuf.push_back(atoms[*it_index].type);
+
+                atoms[*it_index].x = atoms[*it_index].x - sv[ku][0];
+                atoms[*it_index].y = atoms[*it_index].y - sv[ku][1];
+                atoms[*it_index].z = atoms[*it_index].z - sv[ku][2];
+            }
+
+        } /* Endfor lower & higher directions, kdd */
+
+        comt += MPI_Wtime() - com1; /* Update communication time, COMT */
+    }
+}
+
 // Return true if an Atom lies in the boundary to a neighbor ID
 int SubSystem::bbd(Atom atom, int ku) {
     // if (atom.isResident == false) return false; // Do not consider atoms that have moved already 

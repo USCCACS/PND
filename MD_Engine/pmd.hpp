@@ -74,6 +74,9 @@ public:
     // to the position of the atoms they replace for the time step
     void ShiftAtoms();
 
+    // Take atom co-ordinated from global co-ordinates and translate them to wrapped box co-ordinates
+    void WrapAtoms();
+
     // Return true if an Atom lies in them boundary to a neighbor ID
     int bbd(Atom atom, int ku);
 
@@ -109,4 +112,5 @@ public:
         p[0] = s * x;
         p[1] = s * y;
     }
+
 };

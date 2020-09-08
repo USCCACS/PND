@@ -47,10 +47,14 @@ public:
         torch::Tensor KE = 0.5 * (qt.narrow(1, d * Np, d * Np).pow(2).sum(1)).div(Np).reshape_as(PE);
         torch::Tensor Hm = PE + KE;
         torch::Tensor forces = std::get<1>(PEs);
-        torch::Tensor eq = torch::zeros(icfsLoss.sizes());
-        //       torch::mean((forces.narrow(1, 0, Np) - dqt.narrow(1, d*Np, Np)).pow(2)) +
-        //       torch::mean((forces.narrow(1, Np, Np) - dqt.narrow(1, d*Np + Np, Np)).pow(2)) +
-        //       torch::mean((forces.narrow(1, Np + Np, Np) - dqt.narrow(1, d*Np + Np + Np, Np)).pow(2));
+//        torch::Tensor eq = torch::zeros(icfsLoss.sizes());
+        torch::Tensor eq =
+               torch::sum(forces.narrow(1, 0, Np)) +
+               torch::sum(forces.narrow(1, Np, Np)) +
+               torch::sum(forces.narrow(1, 2*Np, Np));
+//            torch::mean((forces.narrow(1, 0, Np) - dqt.narrow(1, d*Np, Np)).pow(2)) +
+//               torch::mean((forces.narrow(1, Np, Np) - dqt.narrow(1, d*Np + Np, Np)).pow(2)) +
+//               torch::mean((forces.narrow(1, Np + Np, Np) - dqt.narrow(1, d*Np + Np + Np, Np)).pow(2));
         torch::Tensor energyLoss = torch::mean(torch::pow(Hm - totalEnergy, 2));
         //torch::Tensor momentumLoss = torch::mean((qt.narrow(1, d*Np, d*Np) - dqt.narrow(1, 0, d*Np)).pow(2));
         torch::Tensor momentumLoss = torch::mean(qt.narrow(1, 3 * Np, Np).sum(1).pow(2) +
@@ -682,12 +686,12 @@ std::tuple<float, torch::Tensor> ComputeAccelPredicted(SubSystem &subsystem) {
 
     vector<vector<float> > forcesAlongAxis(3);
 //    cout << "This is the atoms after calculatinf potentials~~~~~~~~~~~~~~~~~~~~~~~" << endl;
-    for (int atom = 0; atom < (int) subsystem.atoms.size(); atom++) {
-        if (subsystem.atoms[atom].isResident == 1) {
+    for (auto it_atom = subsystem.atoms.begin(); it_atom != subsystem.atoms.end(); ++it_atom) {
+        if (it_atom->isResident == 1) {
 //            cout << atom.x << " " << atom.y << " " << atom.z << " " << atom.isResident << endl;
-            forcesAlongAxis[0].push_back((float) subsystem.atoms[atom].ax);
-            forcesAlongAxis[1].push_back((float) subsystem.atoms[atom].ay);
-            forcesAlongAxis[2].push_back((float) subsystem.atoms[atom].az);
+            forcesAlongAxis[0].push_back((float) it_atom->ax);
+            forcesAlongAxis[1].push_back((float) it_atom->ay);
+            forcesAlongAxis[2].push_back((float) it_atom->az);
         }
     }
     int Np = forcesAlongAxis[0].size();

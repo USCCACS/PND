@@ -638,7 +638,7 @@ std::tuple<float, torch::Tensor> ComputeAccelPredicted(SubSystem &subsystem) {
                                            & all the internode pairs if rij < RCUT; note that for
                                            any copied atom, i < j */
                                         if (i < j && rr < rrCut) {
-                                            if (rr < 0.94) break;
+//                                            if (rr < 0.5) break;
                                             ri2 = 1.0 / rr;
                                             ri6 = ri2 * ri2 * ri2;
                                             r1 = sqrt(rr);

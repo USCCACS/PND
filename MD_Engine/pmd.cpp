@@ -485,6 +485,11 @@ vector<int> SubSystem::AtomMove(bool shouldTrack) {
 void SubSystem::ShiftAtoms() {
     for (auto &atom : atoms) {
         for (int ku = 0; ku < 6; ++ku) {
+            if(atom.shiftCount[ku] > 0) {
+                cout << atom.x << " gets shifted by " << sv[ku][0] << endl;
+                cout << atom.y << " gets shifted by " << sv[ku][1] << endl;
+                cout << atom.z << " gets shifted by " << sv[ku][2] << endl;
+            }
             atom.x = atom.x + (atom.shiftCount[ku] * sv[ku][0]);
             atom.y = atom.y + (atom.shiftCount[ku] * sv[ku][1]);
             atom.z = atom.z + (atom.shiftCount[ku] * sv[ku][2]);

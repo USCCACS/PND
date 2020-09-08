@@ -179,7 +179,9 @@ int main(int argc, char **argv) {
                 }
             }
         }
-        SingleStep(subsystem);
+
+        (stepCount >= subsystem.StepLimit) ? SingleStep(subsystem, true) : SingleStep(subsystem, false);
+
         subsystem.EvalProps(stepCount);
         // use WriteXYZ(frame suffix) from SubSystem to print frames
         if (stepCount >= subsystem.StepLimit) subsystem.WriteXYZ(stepCount);
@@ -293,19 +295,17 @@ int main(int argc, char **argv) {
 }
 
 /*--------------------------------------------------------------------*/
-vector<int> SingleStep(SubSystem &subsystem) {
+void SingleStep(SubSystem &subsystem, bool shouldTrack) {
 /*----------------------------------------------------------------------
 r & rv are propagated by DeltaT using the velocity-Verlet scheme.
 ----------------------------------------------------------------------*/
     double DeltaTH = subsystem.DeltaT / 2.0;
     subsystem.Kick(DeltaTH); /* First half kick to obtain v(t+Dt/2) */
     subsystem.Update(subsystem.DeltaT);
-    vector<int> boundaryCrossingAtomIndices = subsystem.AtomMove();
+    subsystem.AtomMove(shouldTrack);
     subsystem.AtomCopy();
     ComputeAccel(subsystem); /* Computes new accelerations, a(t+Dt) */
     subsystem.Kick(DeltaTH); /* Second half kick to obtain v(t+Dt) */
-
-    return boundaryCrossingAtomIndices;
 }
 
 std::tuple<float, torch::Tensor> LJ3D(SubSystem &predictedSystem, torch::Tensor qt, int Np) {
@@ -324,7 +324,7 @@ std::tuple<float, torch::Tensor> LJ3D(SubSystem &predictedSystem, torch::Tensor 
     double DeltaTH = predictedSystem.DeltaT / 2.0;
     predictedSystem.Kick(DeltaTH); /* First half kick to obtain v(t+Dt/2) */
     predictedSystem.Update(predictedSystem.DeltaT);
-    predictedSystem.AtomMove();
+    predictedSystem.AtomMove(false);
     predictedSystem.AtomCopy();
     auto lpeForces = ComputeAccelPredicted(predictedSystem);
     predictedSystem.Kick(DeltaTH); /* Second half kick to obtain v(t+Dt) */

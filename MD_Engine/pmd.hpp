@@ -68,7 +68,7 @@ public:
     // Send moved-out atoms to neighbor nodes and receive moved-in atoms
     // from neighbor nodes
     // returns the indexes of the atoms that have moved out/moved in
-    std::vector<int> AtomMove();
+    std::vector<int> AtomMove(bool);
 
     // Obtain the final position of the atoms by shifting the atom co-ordinates of the moved in-atoms
     // to the position of the atoms they replace for the time step

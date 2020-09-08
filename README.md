@@ -3,7 +3,7 @@ Differential Solver Neuralnet MD
 
 ## Build Command
 Use CMake to build the target `grad_lap`. This is binary for predicting energies using auto gradient using hamiltonian.
-`cmake --build . --target grad_lap -- -j 4`
+`cmake --build . --target pingu_example`
 
 ## Input Parameters
 All system input parameters go into pmd.in

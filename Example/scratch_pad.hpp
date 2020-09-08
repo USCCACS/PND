@@ -12,7 +12,7 @@ double ComputeAccel(SubSystem &);
 
 std::tuple<float, torch::Tensor> ComputeAccelPredicted(SubSystem &);
 
-std::vector<int> SingleStep(SubSystem &subsystem);
+void SingleStep(SubSystem &subsystem, bool shouldTrack);
 
 // Similar to LJ2D_M function but works in a sing;e time splice to return the PE
 std::tuple<float, torch::Tensor> LJ3D(SubSystem &, torch::Tensor, int Np);

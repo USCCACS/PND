@@ -301,7 +301,7 @@ void SubSystem::AtomCopy() {
 
 // Send moved-out atoms to neighbor nodes and receive moved-in atoms
 // from neighbor nodes
-vector<int> SubSystem::AtomMove() {
+vector<int> SubSystem::AtomMove(bool shouldTrack) {
     vector<int> boundaryCrossingAtomIndices;
     vector<vector<int> > mvque(6);
     int ku, kd, i, kdd, kul, kuh, inode, nsd, nrc;
@@ -327,23 +327,16 @@ vector<int> SubSystem::AtomMove() {
                 /* Move to the lower direction */
                 if (bmv(*it_atom, kul)) {
                     mvque[kul].push_back(i);
-                    // if(pid == 0) cout << "Tested positive for move " << it_atom->x << " " << it_atom->z << " " << it_atom->y << endl;
+//                     if(pid == 0) cout << "Tested positive for move " << it_atom->x << " " << it_atom->z << " " << it_atom->y << endl;
+//                     if(pid == 0) cout << "Tested positive for move, atom " << i << endl;
                 }
                 /* Move to the higher direction */
                 else if (bmv(*it_atom, kuh)) {
                     mvque[kuh].push_back(i);
-                    // if(pid == 0) cout << "Tested positive for move " << it_atom->x << " " << it_atom->z << " " << it_atom->y << endl;}
+//                     if(pid == 0) cout << "Tested positive for move " << it_atom->x << " " << it_atom->z << " " << it_atom->y << endl;
+//                    if(pid == 0) cout << "Tested positive for move, atom " << i << endl;
                 }
             }
-
-            // if(pid ==0) {cout << "atoms identified for move to " << kul << " & " << kuh << " : " << mvque[kul].size() << " " << mvque[kuh].size() << endl;
-            // cout << "their indices are \n";
-            // for(auto & val : mvque[kul])
-            // cout << val << " ";
-            // cout << "\n";
-            // for(auto & val : mvque[kuh])
-            // cout << val << " ";
-            // cout << "\n";
         }
 
         /* Message passing------------------------------------------------*/
@@ -386,15 +379,15 @@ vector<int> SubSystem::AtomMove() {
 
             /* Message buffering */
             for (auto it_index = mvque[ku].begin(); it_index != mvque[ku].end(); ++it_index) {
-                // Specify the neighbor index of move-out
-                atoms[*it_index].shiftCount[ku]++;
+                // Specify the neighbor index of move-out if the tracking flag is set to true
+                if(shouldTrack == true)
+                    atoms[*it_index].shiftCount[ku]++;
 
                 sendBuf.push_back(atoms[*it_index].type);
 
                 sendBuf.push_back(atoms[*it_index].x - sv[ku][0]);
                 sendBuf.push_back(atoms[*it_index].y - sv[ku][1]);
                 sendBuf.push_back(atoms[*it_index].z - sv[ku][2]);
-
                 // In AtomMove we will also be considering the velocities
                 sendBuf.push_back(atoms[*it_index].vx);
                 sendBuf.push_back(atoms[*it_index].vy);

@@ -83,7 +83,7 @@ std::pair<torch::Tensor, torch::Tensor> Pingu::LossPreTrain(torch::Tensor t_seq,
 
 std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> Pingu::Loss(
         torch::Tensor t_seq, std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs,
-        torch::Tensor totalEnergy, int n, int Np, int d) {}
+        torch::Tensor totalEnergy, torch::Tensor kineticEnergy, torch::Tensor potentialEnergy, int n, int Np, int d) {}
 
 
 std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> Pingu::UpdatePreParamsNADAM(torch::Tensor t_seq,
@@ -131,13 +131,15 @@ std::pair<torch::Tensor, torch::Tensor> Pingu::PreTrain(torch::Tensor t_seq,
 std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor>
 Pingu::UpdateParamsNADAM(torch::Tensor t_seq,
                          std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs,
-                         torch::Tensor velocities, torch::Tensor S, torch::Tensor totalEnergy, int epoch, int n, int Np,
+                         torch::Tensor velocities, torch::Tensor S, torch::Tensor totalEnergy, torch::Tensor kineticEnergy,
+                         torch::Tensor potentialEnergy, int epoch, int n, int Np,
                          int d, double alpha, double epsilon, torch::Tensor beta) {}
 
 std::pair<torch::Tensor, torch::Tensor>
 Pingu::mainTrain(torch::Tensor params, torch::Tensor t_seq,
                  std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs, int num_epochs,
-                 torch::Tensor totalEnergy, int n, int Np, int d, double learn_rate, double momentum) {
+                 torch::Tensor totalEnergy, torch::Tensor kineticEnergy, torch::Tensor potentialEnergy,
+                 int n, int Np, int d, double learn_rate, double momentum) {
 }
 
 

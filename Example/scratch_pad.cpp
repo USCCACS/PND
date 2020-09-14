@@ -16,10 +16,8 @@ public:
 
     std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor>
     Loss(torch::Tensor t_seq, std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs,
-         torch::Tensor totalEnergy, int n, int Np, int d) {
+         torch::Tensor totalEnergy, torch::Tensor kineticEnergy, torch::Tensor potentialEnergy, int n, int Np, int d) {
         params.set_requires_grad(true);
-        //    totalEnergy.set_requires_grad(true);
-        //    t_seq.set_requires_grad(false);
 
         torch::Tensor w0 = params.narrow(0, 0, n);
         torch::Tensor b0 = params.narrow(0, n, n);
@@ -55,13 +53,15 @@ public:
 //            torch::mean((forces.narrow(1, 0, Np) - dqt.narrow(1, d*Np, Np)).pow(2)) +
 //               torch::mean((forces.narrow(1, Np, Np) - dqt.narrow(1, d*Np + Np, Np)).pow(2)) +
 //               torch::mean((forces.narrow(1, Np + Np, Np) - dqt.narrow(1, d*Np + Np + Np, Np)).pow(2));
-        torch::Tensor energyLoss = torch::mean(torch::pow(Hm - totalEnergy, 2));
+        torch::Tensor energyLoss = torch::mean(torch::pow(Hm - totalEnergy, 2)) +
+                torch::mean(torch::pow(kineticEnergy - KE, 2)) +
+                torch::mean(torch::pow(potentialEnergy - PE, 2));
         //torch::Tensor momentumLoss = torch::mean((qt.narrow(1, d*Np, d*Np) - dqt.narrow(1, 0, d*Np)).pow(2));
         torch::Tensor momentumLoss = torch::mean(qt.narrow(1, 3 * Np, Np).sum(1).pow(2) +
                                                  qt.narrow(1, (3 * Np) + Np, Np).sum(1).pow(2) +
                                                  qt.narrow(1, (3 * Np) + 2 * Np, Np).sum(1).pow(2));
 
-        torch::Tensor loss = 20 * icfsLoss + energyLoss + momentumLoss;
+        torch::Tensor loss = 20 * icfsLoss + 80*energyLoss + momentumLoss + eq;
 
         loss.backward();
         torch::Tensor grads = params.grad();
@@ -74,7 +74,7 @@ public:
                                                                                              std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs,
                                                                                              torch::Tensor velocities,
                                                                                              torch::Tensor S,
-                                                                                             torch::Tensor totalEnergy,
+                                                                                             torch::Tensor totalEnergy, torch::Tensor kineticEnergy, torch::Tensor potentialEnergy,
                                                                                              int epoch, int n, int Np,
                                                                                              int d, double alpha,
                                                                                              double epsilon,
@@ -83,7 +83,7 @@ public:
         epoch += 1;
         torch::Tensor tmp_beta = torch::pow(beta, epoch);
         std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> fromTrain = Loss(
-                t_seq, icfs, totalEnergy, n, Np, d);
+                t_seq, icfs, totalEnergy, kineticEnergy, potentialEnergy, n, Np, d);
         torch::Tensor grads = std::get<0>(fromTrain);
         torch::Tensor loss = std::get<1>(fromTrain);
         if ((epoch) % 1000 == 0)
@@ -104,7 +104,7 @@ public:
 
     std::pair<torch::Tensor, torch::Tensor> mainTrain(torch::Tensor params, torch::Tensor t_seq,
                                                       std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs,
-                                                      int num_epochs, torch::Tensor totalEnergy, int n, int Np, int d,
+                                                      int num_epochs, torch::Tensor totalEnergy, torch::Tensor kineticEnergy, torch::Tensor potentialEnergy, int n, int Np, int d,
                                                       double learn_rate, double momentum) {
         this->params = params;
         torch::Tensor velocities = torch::zeros(this->params.sizes());
@@ -118,7 +118,7 @@ public:
 
         auto start = std::chrono::high_resolution_clock::now();
         for (int epoch = 0; epoch < num_epochs; ++epoch) {
-            auto values = UpdateParamsNADAM(t_seq, icfs, velocities, S, totalEnergy, epoch, n, Np, d, 0.001,
+            auto values = UpdateParamsNADAM(t_seq, icfs, velocities, S, totalEnergy, kineticEnergy, potentialEnergy, epoch, n, Np, d, 0.001,
                                             pow(10, -7),
                                             torch::tensor({0.999, 0.999}));
             params = std::get<0>(values);
@@ -158,6 +158,9 @@ int main(int argc, char **argv) {
     pingu.defineParams(Np);
 
     vector<float> t_seq_vect;
+    vector<float> kinetic_energy_vect;
+    vector<float> potential_energy_vect;
+
     torch::Tensor positionsAndVelocitiesOverTimeSteps;
     torch::Tensor totalEnergy;
 
@@ -191,6 +194,8 @@ int main(int argc, char **argv) {
         if (stepCount >= subsystem.StepLimit) subsystem.WriteXYZ(stepCount);
 
         t_seq_vect.push_back(stepCount * subsystem.DeltaT);
+        kinetic_energy_vect.push_back(subsystem.kinEnergy);
+        potential_energy_vect.push_back(subsystem.potEnergy);
 
         torch::Tensor positionsAndVelocitiesPerTimeStep;
         torch::Tensor velocitiesPerTimeStep;
@@ -224,7 +229,6 @@ int main(int argc, char **argv) {
             checkPointState = subsystem;
         }
 
-
     }
 
     pingu.setCheckPoint(checkPointState);
@@ -236,6 +240,14 @@ int main(int argc, char **argv) {
     torch::Tensor md_qt = positionsAndVelocitiesOverTimeSteps.narrow(0, subsystem.StepLimit, pingu.StepTrain);
     torch::Tensor t_seq = t_seq_entire.narrow(0, subsystem.StepLimit, pingu.StepTrain);
     cout << "obtained md positions and velocities matrix" << endl;
+    cout << "time sequences to predict" << t_seq << endl;
+
+    torch::Tensor kinetic_energy_entire = torch::from_blob(kinetic_energy_vect.data(), {numberOfTimeSequences, 1});
+    torch::Tensor kineticEnergy = kinetic_energy_entire.narrow(0, subsystem.StepLimit, pingu.StepTrain);
+
+    torch::Tensor potential_energy_entire = torch::from_blob(potential_energy_vect.data(), {numberOfTimeSequences, 1});
+    torch::Tensor potentialEnergy = potential_energy_entire.narrow(0, subsystem.StepLimit, pingu.StepTrain);
+    cout << "obtained md potential energy matrix" << endl;
     // Set initial weights
     //    torch::Tensor w0b0_params = torch::ones({2*n, 1});
     //    torch::Tensor b1_params = md_qt[0].unsqueeze(1);
@@ -272,7 +284,7 @@ int main(int argc, char **argv) {
     md_qt = positionsAndVelocitiesOverTimeSteps.narrow(0, subsystem.StepLimit, pingu.StepTrain);
 
     auto mainTrainLossValues = pingu.mainTrain(preTrainLossValues.first, t_seq, icfs, pingu.MainTrainEpochs,
-                                               totalEnergy, pingu.nodes, Np, 3, 0.0001, 0.99);
+                                               totalEnergy,kineticEnergy, potentialEnergy, pingu.nodes, Np, 3, 0.0001, 0.99);
     cout << "main train loss value: " << mainTrainLossValues.second << endl;
     // Get the new weights
     pingu.params = mainTrainLossValues.first;

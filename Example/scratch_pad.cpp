@@ -16,7 +16,7 @@ public:
 
     std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor>
     Loss(torch::Tensor t_seq, std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs,
-         torch::Tensor totalEnergy, torch::Tensor kineticEnergy, torch::Tensor potentialEnergy, int n, int Np, int d) {
+         torch::Tensor H0, torch::Tensor kineticEnergy, torch::Tensor potentialEnergy, int n, int Np, int d) {
         params.set_requires_grad(true);
 
         torch::Tensor w0 = params.narrow(0, 0, n);
@@ -45,23 +45,19 @@ public:
         torch::Tensor KE = 0.5 * (qt.narrow(1, d * Np, d * Np).pow(2).sum(1)).div(Np).reshape_as(PE);
         torch::Tensor Hm = PE + KE;
         torch::Tensor forces = std::get<1>(PEs);
-//        torch::Tensor eq = torch::zeros(icfsLoss.sizes());
+
         torch::Tensor eq =
                torch::sum(forces.narrow(1, 0, Np)) +
                torch::sum(forces.narrow(1, Np, Np)) +
                torch::sum(forces.narrow(1, 2*Np, Np));
-//            torch::mean((forces.narrow(1, 0, Np) - dqt.narrow(1, d*Np, Np)).pow(2)) +
-//               torch::mean((forces.narrow(1, Np, Np) - dqt.narrow(1, d*Np + Np, Np)).pow(2)) +
-//               torch::mean((forces.narrow(1, Np + Np, Np) - dqt.narrow(1, d*Np + Np + Np, Np)).pow(2));
-        torch::Tensor energyLoss = torch::mean(torch::pow(Hm - totalEnergy, 2)) +
-                torch::mean(torch::pow(kineticEnergy - KE, 2)) +
-                torch::mean(torch::pow(potentialEnergy - PE, 2));
-        //torch::Tensor momentumLoss = torch::mean((qt.narrow(1, d*Np, d*Np) - dqt.narrow(1, 0, d*Np)).pow(2));
+           
+        torch::Tensor energyLoss = torch::mean(torch::pow(Hm - H0, 2));
+
         torch::Tensor momentumLoss = torch::mean(qt.narrow(1, 3 * Np, Np).sum(1).pow(2) +
                                                  qt.narrow(1, (3 * Np) + Np, Np).sum(1).pow(2) +
                                                  qt.narrow(1, (3 * Np) + 2 * Np, Np).sum(1).pow(2));
 
-        torch::Tensor loss = 20 * icfsLoss + 80*energyLoss + momentumLoss + eq;
+        torch::Tensor loss = 20*icfsLoss + 80*energyLoss + momentumLoss + eq;
 
         loss.backward();
         torch::Tensor grads = params.grad();

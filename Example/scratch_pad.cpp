@@ -50,7 +50,7 @@ public:
                torch::sum(forces.narrow(1, 0, Np)) +
                torch::sum(forces.narrow(1, Np, Np)) +
                torch::sum(forces.narrow(1, 2*Np, Np));
-           
+
         torch::Tensor energyLoss = torch::mean(torch::pow(Hm - H0, 2));
 
         torch::Tensor momentumLoss = torch::mean(qt.narrow(1, 3 * Np, Np).sum(1).pow(2) +
@@ -250,15 +250,15 @@ int main(int argc, char **argv) {
     //    torch::Tensor w1_params = torch::rand({2*n*3*Np, 1});
     //    torch::Tensor params = torch::cat({w0b0_params, w1_params, b1_params}, 0);
     // Set the inital and final values
-    torch::Tensor initialPositions = md_qt.narrow(1, 0, 3*Np)[0];
+    torch::Tensor initialPositions = md_qt.narrow(1, 0, 3*Np)[1];
     cout << "obtained initial positions" << endl;
-    torch::Tensor finalPositions = md_qt.narrow(1, 0, 3*Np)[pingu.StepTrain - 1];
+    torch::Tensor finalPositions = md_qt.narrow(1, 0, 3*Np)[pingu.StepTrain - 2];
     cout << "obtained final positions" << endl;
 //    cout << "Final positions are: " << finalPositions << endl;
 //    cout << "pen ultimate positions are: " << md_qt.narrow(1, 0, 3*Np)[pingu.StepTrain - 2] << endl;
-    torch::Tensor initialVelocities = md_qt.narrow(1, 3 * Np, 3*Np)[0];
+    torch::Tensor initialVelocities = md_qt.narrow(1, 3 * Np, 3*Np)[1];
     cout << "obtained initial velocities" << endl;
-    torch::Tensor finalVelocities = md_qt.narrow(1, 3 * Np, 3*Np)[pingu.StepTrain - 1];
+    torch::Tensor finalVelocities = md_qt.narrow(1, 3 * Np, 3*Np)[pingu.StepTrain - 2];
     cout << "obtained final velocities" << endl;
 
     std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs =
@@ -712,5 +712,3 @@ std::tuple<float, torch::Tensor> ComputeAccelPredicted(SubSystem &subsystem) {
 //    cout << "exiting LJ3D " << endl;
     return std::make_tuple(lpe, forces); // Create object before return.
 }
-
-

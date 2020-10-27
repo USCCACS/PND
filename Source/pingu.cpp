@@ -16,7 +16,7 @@ using namespace std;
 
 Pingu::Pingu() {
     ifstream ifs;
-    ifs.open("pingu.in", ifstream::in);
+    ifs.open("Source/pingu.in", ifstream::in);
     if (!ifs.is_open()) {
         cerr << "failed to open pinny input file" << endl;
         terminate();

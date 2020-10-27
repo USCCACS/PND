@@ -28,7 +28,7 @@ SubSystem::SubSystem() : pid(0), n(0), nglob(0), comt(0.0), al{}, vid{}, myparit
     MPI_Comm_rank(MPI_COMM_WORLD, &pid);  // My processor ID
 
     // Open pmd.in file and read inputs
-    ifstream ifs("pmd.in", ifstream::in);
+    ifstream ifs("MD_Engine/pmd.in", ifstream::in);
     if (!ifs.is_open()) {
         cerr << "failed to open md input file" << endl;
         terminate();

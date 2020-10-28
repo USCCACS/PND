@@ -2,10 +2,10 @@
 // Created by USCCACS02 on 8/5/20.
 //
 
-#include "../Source/pingu.cpp"
+#include "../Source/pnd.cpp"
 #include "scratch_pad.hpp"
 
-class ScratchPad : public Pingu {
+class ScratchPad : public PND {
 
 public:
     SubSystem checkPointState;

@@ -2,17 +2,17 @@
 // Created by USCCACS02 on 1/12/20.
 //
 
-#ifndef DSN_MD_PINGU_HPP
-#define DSN_MD_PINGU_HPP
+#ifndef DSN_MD_PND_HPP
+#define DSN_MD_PND_HPP
 
 #include <torch/torch.h>
 
-class Pingu {
+class PND {
 public:
     int PreTrainEpochs, MainTrainEpochs, StepTrain, nodes;
     torch::Tensor params;
 
-    Pingu();
+    PND();
 
     void defineParams(int numberOfAtoms);
 
@@ -60,5 +60,5 @@ public:
 
 
 //torch::Tensor LJ3D_M(int stepsToState, torch::Tensor, int Np);
-#endif //DSN_MD_PINGU_HPP
+#endif //DSN_MD_PND_HPP
 

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(DSN-MD)
+project(PND)
 
 set(CMAKE_CXX_STANDARD 14)
 
@@ -13,19 +13,19 @@ add_library("MD_Engine" STATIC
         "MD_Engine/pmd.hpp"
         )
 
-add_library("Pingu" STATIC
-        "Source/pingu.cpp"
-        "Source/pingu.hpp"
+add_library("Pnd" STATIC
+        "Source/pnd.cpp"
+        "Source/pnd.hpp"
         )
-target_link_libraries(Pingu "${TORCH_LIBRARIES}")
+target_link_libraries(Pnd "${TORCH_LIBRARIES}")
 
 include_directories(${MPI_INCLUDE_PATH})
 
-add_executable(pingu_example Example/scratch_pad.cpp Example/scratch_pad.hpp)
-target_link_libraries(pingu_example "${TORCH_LIBRARIES}")
-target_link_libraries(pingu_example MD_Engine)
-target_link_libraries(pingu_example Pingu)
-set_property(TARGET pingu_example PROPERTY CXX_STANDARD 14)
+add_executable(pnd_example Example/scratch_pad.cpp Example/scratch_pad.hpp)
+target_link_libraries(pnd_example "${TORCH_LIBRARIES}")
+target_link_libraries(pnd_example MD_Engine)
+target_link_libraries(pnd_example Pnd)
+set_property(TARGET pnd_example PROPERTY CXX_STANDARD 14)
 
 # The following code block is suggested to be used on Windows.
 # According to https://github.com/pytorch/pytorch/issues/25457,
@@ -39,4 +39,4 @@ if (MSVC)
             $<TARGET_FILE_DIR:example-app>)
 endif (MSVC)
 
-target_link_libraries(pingu_example ${MPI_LIBRARIES})
+target_link_libraries(pnd_example ${MPI_LIBRARIES})

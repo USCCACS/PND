@@ -7,16 +7,16 @@
 #include <numeric>
 #include <vector>
 #include <random>
-#include "pingu.hpp"
+#include "pnd.hpp"
 #include "mpi.h"
 #include <chrono>
 #include <set>
 
 using namespace std;
 
-Pingu::Pingu() {
+PND::PND() {
     ifstream ifs;
-    ifs.open("Source/pingu.in", ifstream::in);
+    ifs.open("Source/pnd.in", ifstream::in);
     if (!ifs.is_open()) {
         cerr << "failed to open pinny input file" << endl;
         terminate();
@@ -28,10 +28,10 @@ Pingu::Pingu() {
 
     ifs.close();
 
-    cout << "Pingu: Successfully completed reading input file" << endl;
+    cout << "PND: Successfully completed reading input file" << endl;
 }
 
-void Pingu::defineParams(int numberOfAtoms) {
+void PND::defineParams(int numberOfAtoms) {
     std::default_random_engine generator;
     std::uniform_real_distribution<float> distribution(0, 1);
 
@@ -44,9 +44,9 @@ void Pingu::defineParams(int numberOfAtoms) {
                                     {2 * nodes + 2 * numberOfAtoms * 3 * nodes + 2 * 3 * numberOfAtoms, 1});
 }
 
-std::pair<torch::Tensor, torch::Tensor> Pingu::LossPreTrain(torch::Tensor t_seq,
-                                                            std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs,
-                                                            int n, int Np, int d) {
+std::pair<torch::Tensor, torch::Tensor> PND::LossPreTrain(torch::Tensor t_seq,
+                                                          std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs,
+                                                          int n, int Np, int d) {
     params.set_requires_grad(true);
 
     //Beginning of QT part
@@ -81,20 +81,20 @@ std::pair<torch::Tensor, torch::Tensor> Pingu::LossPreTrain(torch::Tensor t_seq,
     return std::make_pair(grads, loss);
 }
 
-std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> Pingu::Loss(
+std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> PND::Loss(
         torch::Tensor t_seq, std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs,
         torch::Tensor totalEnergy, torch::Tensor kineticEnergy, torch::Tensor potentialEnergy, int n, int Np, int d) {}
 
 
-std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> Pingu::UpdatePreParamsNADAM(torch::Tensor t_seq,
-                                                                                                   std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs,
-                                                                                                   torch::Tensor velocities,
-                                                                                                   torch::Tensor S,
-                                                                                                   int epoch, int n,
-                                                                                                   int Np, int d,
-                                                                                                   double alpha,
-                                                                                                   double epsilon,
-                                                                                                   torch::Tensor beta) {
+std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> PND::UpdatePreParamsNADAM(torch::Tensor t_seq,
+                                                                                                 std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs,
+                                                                                                 torch::Tensor velocities,
+                                                                                                 torch::Tensor S,
+                                                                                                 int epoch, int n,
+                                                                                                 int Np, int d,
+                                                                                                 double alpha,
+                                                                                                 double epsilon,
+                                                                                                 torch::Tensor beta) {
     epoch += 1;
     torch::Tensor tmp_beta = torch::pow(beta, epoch);
     std::pair<torch::Tensor, torch::Tensor> fromLossPreTrain = LossPreTrain(t_seq, icfs, n, Np, d);
@@ -111,10 +111,10 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> Pingu::Up
     return std::make_tuple(params, velocities, S, meanLoss);
 }
 
-std::pair<torch::Tensor, torch::Tensor> Pingu::PreTrain(torch::Tensor t_seq,
-                                                        std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs,
-                                                        int num_epochs, int n, int Np, int d, double learn_rate,
-                                                        double momentum) {
+std::pair<torch::Tensor, torch::Tensor> PND::PreTrain(torch::Tensor t_seq,
+                                                      std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs,
+                                                      int num_epochs, int n, int Np, int d, double learn_rate,
+                                                      double momentum) {
     torch::Tensor velocities = torch::zeros(params.sizes());
     torch::Tensor S = torch::zeros(params.sizes());
     torch::Tensor meanLoss;
@@ -129,17 +129,17 @@ std::pair<torch::Tensor, torch::Tensor> Pingu::PreTrain(torch::Tensor t_seq,
 }
 
 std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor>
-Pingu::UpdateParamsNADAM(torch::Tensor t_seq,
-                         std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs,
-                         torch::Tensor velocities, torch::Tensor S, torch::Tensor totalEnergy, torch::Tensor kineticEnergy,
-                         torch::Tensor potentialEnergy, int epoch, int n, int Np,
-                         int d, double alpha, double epsilon, torch::Tensor beta) {}
+PND::UpdateParamsNADAM(torch::Tensor t_seq,
+                       std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs,
+                       torch::Tensor velocities, torch::Tensor S, torch::Tensor totalEnergy, torch::Tensor kineticEnergy,
+                       torch::Tensor potentialEnergy, int epoch, int n, int Np,
+                       int d, double alpha, double epsilon, torch::Tensor beta) {}
 
 std::pair<torch::Tensor, torch::Tensor>
-Pingu::mainTrain(torch::Tensor params, torch::Tensor t_seq,
-                 std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs, int num_epochs,
-                 torch::Tensor totalEnergy, torch::Tensor kineticEnergy, torch::Tensor potentialEnergy,
-                 int n, int Np, int d, double learn_rate, double momentum) {
+PND::mainTrain(torch::Tensor params, torch::Tensor t_seq,
+               std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> icfs, int num_epochs,
+               torch::Tensor totalEnergy, torch::Tensor kineticEnergy, torch::Tensor potentialEnergy,
+               int n, int Np, int d, double learn_rate, double momentum) {
 }
 
 

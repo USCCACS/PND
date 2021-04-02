@@ -2,8 +2,9 @@
 Differential Solver Neuralnet MD
 
 ## Build Command
-Use CMake to build the target `grad_lap`. This is binary for predicting energies using auto gradient using hamiltonian.
-`cmake --build . --target pingu_example`
+Use CMake to build the target `pnd_example`. This is binary for predicting energies using auto gradient using hamiltonian.
+`cmake --build . --config Release`
+
 
 ## Input Parameters
 All system input parameters go into pmd.in
@@ -36,27 +37,48 @@ The following is an example
 ```
 
 ## Build on USC HPC
-To build on HPC you will need to load and 
-execute following bash scripts into the current bash 
-process <br/>
-+ Openmpi - `/usr/usc/openmpi/default/setup.sh`
-+ Gnu compiler collection above 5.3.0 - `/usr/usc/gnu/gcc/8.3.0/setup.sh`
-+ Cmake - `/usr/usc/cmake/3.12.3/setup.sh`
-+ `export CC=/usr/usc/gnu/gcc/8.3.0/bin/gcc`
-+ `export CXX=/usr/usc/gnu/gcc/8.3.0/bin/g++`
-+ Install pre-cxx11 ABI copy of libtorch from 
-Pytorch's getting started [page](https://pytorch.org/get-started/locally/)
-+ Add location of LibTorch library to cmake in prefix path like `cmake -DCMAKE_PREFIX_PATH=/path/to/libtorch`. 
-Make sure that the  C and CXX compiler identified are GNU 5.3.0 or above. We try to ensure
-this by exporting CC and CXX flags in previous steps
-+ Follow build command mentioned above from project directory.
+Create a compressed source coude file using the follwing command
+`tar -cvzf PND.tgz PND/`
 
+To build on HPC you will need to load the offered python module with the folling commands. 
+```
+module purge
+module load usc
+module load cuda/10.1.243 python/3.7.6 cmake/3.16.2 cudnn/8.0.2-10.1
+```
+The next step is to use CMake to build the target 
+
+```
+cds2
+
+[ -d "run_PND" ] && echo "Purging past source code from scratch" rm -rf run_PND
+
+mkdir run_PND; cd run_PND
+
+cp ~/PND.tgz ./
+
+tar -xzvf PND.tgz 
+
+cd PND/
+
+mkdir build; cd build
+
+python3 -c 'import torch ; print(torch.utils.cmake_prefix_path)'
+
+CC=gcc CXX=g++ cmake -DCMAKE_PREFIX_PATH='/spack/apps/linux-centos7-x86_64/gcc-8.3.0/python-3.7.6-dd2am3dyvlpovhd4rizwfzc45wnsajxf/lib/python3.7/site-packages/torch/share/cmake;/usr/lib64' ../
+
+cmake --build . --config Release
+
+./pnd_example
+
+```
 
 # Build note on Intel devcloud
 ```
 cmake .. -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=dpcpp -DCMAKE_PREFIX_PATH=$PWD/../libtorch/ 
 ```
 and edit CMakeFiles/grad_lap.dir/flags.make
+
 ```
 # compile CXX with /opt/intel/inteloneapi/compiler/latest/linux/bin/dpcpp
 CXX_FLAGS =   -D_GLIBCXX_USE_CXX11_ABI=0   -D_GLIBCXX_USE_CXX11_ABI=0  -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -Wno-write-strings -Wno-unknown-pragmas -Wno-missing-braces -openmp -std=gnu++14

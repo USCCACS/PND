@@ -16,7 +16,7 @@ using namespace std;
 
 PND::PND() {
     ifstream ifs;
-    ifs.open("Source/pnd.in", ifstream::in);
+    ifs.open("../Source/pnd.in", ifstream::in);
     if (!ifs.is_open()) {
         cerr << "failed to open pinny input file" << endl;
         terminate();

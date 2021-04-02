@@ -23,4 +23,3 @@ CC=gcc CXX=g++ cmake -DCMAKE_PREFIX_PATH='/spack/apps/linux-centos7-x86_64/gcc-8
 cmake --build . --config Release
 
 ./pnd_example
-

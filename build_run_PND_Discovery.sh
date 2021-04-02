@@ -1,6 +1,6 @@
 module purge
 module load usc
-module load python/3.7.6 cmake/3.16.2
+module load cuda/10.1.243 python/3.7.6 cmake/3.16.2 cudnn/8.0.2-10.1
 
 cd /scratch2/razakh/
 

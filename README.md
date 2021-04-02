@@ -76,8 +76,8 @@ cmake --build . --config Release
 
 ```
 
-copy the sbatch file `sbatch_PND.sh` to the same leve l as PND and run. 
-`sbatch_PND` after requesting for resources compresses the source code and runs the build commands in 
+copy the sbatch file `sbatch_PND.sh` to the directory level containing PND and run it.
+This script requests for resources, compresses the source code and runs the build commands listed in 
 `build_run_PND_Discovery.sh`.
 
 # Build note on Intel devcloud

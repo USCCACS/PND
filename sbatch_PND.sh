@@ -6,7 +6,7 @@
 
 tar -cvzf PND.tgz PND/
 
-[ -f "build_run_PND_Discovery.sh" ]  && rm build_run_PND_Discovery.sh
+[ -f "build_run_PND_Discovery.sh" ] && rm build_run_PND_Discovery.sh
 
 cp PND/build_run_PND_Discovery.sh .
 

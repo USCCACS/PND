@@ -37,6 +37,9 @@ The following is an example
 ```
 
 ## Build on USC HPC
+
+(The following steps are implemented in the `build_run_PND_Discovery.sh` file. Details provided here)
+
 Create a compressed source coude file using the follwing command
 `tar -cvzf PND.tgz PND/`
 
@@ -49,9 +52,9 @@ module load cuda/10.1.243 python/3.7.6 cmake/3.16.2 cudnn/8.0.2-10.1
 The next step is to use CMake to build the target 
 
 ```
-cds2
+cds2 # change into your scratch directory
 
-[ -d "run_PND" ] && echo "Purging past source code from scratch" rm -rf run_PND
+rm -rf run_PND
 
 mkdir run_PND; cd run_PND
 
@@ -72,6 +75,10 @@ cmake --build . --config Release
 ./pnd_example
 
 ```
+
+copy the sbatch file `sbatch_PND.sh` to the same leve l as PND and run. 
+`sbatch_PND` after requesting for resources compresses the source code and runs the build commands in 
+`build_run_PND_Discovery.sh`.
 
 # Build note on Intel devcloud
 ```

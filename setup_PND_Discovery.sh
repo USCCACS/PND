@@ -4,7 +4,7 @@ module load cuda/10.1.243 python/3.7.6 cmake/3.16.2 cudnn/8.0.2-10.1
 
 cd /scratch2/razakh/
 
-[-d "run_PND"] && echo "Purging past source code from scratch" rm -rf run_PND
+[ -d "run_PND" ] && echo "Purging past source code from scratch" rm -rf run_PND
 
 mkdir run_PND; cd run_PND
 

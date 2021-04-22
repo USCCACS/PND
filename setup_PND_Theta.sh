@@ -11,8 +11,8 @@ NPROC=$((NPROC_PER_NODE*COBALT_JOBSIZE))
 
 mkdir build; cd build
 
-python3 -c 'import hotovod.torch as hvd; print(hvd.torch.utils.cmake_prefix_path)'
+python3 -c 'import horovod.torch as hvd; print(hvd.torch.utils.cmake_prefix_path)'
 
-CC=gcc CXX=g++ cmake -DCMAKE_PREFIX_PATH='python3 -c 'import hotovod.torch as hvd; print(hvd.torch.utils.cmake_prefix_path)'' ../
+CC=gcc CXX=g++ cmake -DCMAKE_PREFIX_PATH='python3 -c 'import horovod.torch as hvd; print(hvd.torch.utils.cmake_prefix_path)'' ../
 
 cmake --build . --config Release

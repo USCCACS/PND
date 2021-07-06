@@ -1,9 +1,11 @@
-//
-// Created by USCCACS02 on 8/5/20.
-//
+/** scratch_pad.cpp is an examlpe to demonstrates how
+ * users implement loss functions, specify intial and boundary conditions,
+ * and conservation laws for their systems
+ */
 
 #include "../Source/pnd.cpp"
 #include "scratch_pad.hpp"
+
 
 class ScratchPad : public PND {
 
@@ -106,11 +108,6 @@ public:
         torch::Tensor velocities = torch::zeros(this->params.sizes());
         torch::Tensor S = torch::zeros(this->params.sizes());
         torch::Tensor loss;
-//    velocities.set_requires_grad(false);
-//    S.set_requires_grad(false);
-//    loss.set_requires_grad(false);
-//    params.set_requires_grad(false);
-//    t_seq.set_requires_grad(false);
 
         auto start = std::chrono::high_resolution_clock::now();
         for (int epoch = 0; epoch < num_epochs; ++epoch) {
@@ -126,11 +123,6 @@ public:
                 std::chrono::duration<double> elapsed_seconds = end - start;
                 cout << elapsed_seconds.count() << endl;
 
-//            for (auto it_atom = checkPointState.atoms.begin(); it_atom != checkPointState.atoms.end(); ++it_atom) {
-//                if(it_atom->isResident) {
-//                    cout << "x: " << it_atom->x << " y: " <<  it_atom->y << endl;
-//                }
-//            }
             }
         }
 
@@ -140,10 +132,11 @@ public:
 
 };
 
+// Main method
 int main(int argc, char **argv) {
-
-    MPI_Init(&argc, &argv); // Initialize the MPI environment
-    // Create Subsystem based on input
+    // Initialize the MPI environment
+    MPI_Init(&argc, &argv);
+    // Create Subsystem based on input file
     SubSystem subsystem = SubSystem();
     SubSystem checkPointState;
 

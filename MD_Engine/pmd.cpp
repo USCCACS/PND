@@ -1,7 +1,7 @@
-/*----------------------------------------------------------------------
-Program pmd.cpp performs parallel molecular-dynamics for Lennard-Jones
-systems using the Message Passing Interface (MPI) standard.
-----------------------------------------------------------------------*/
+/**
+ * pmd.cpp performs parallel molecular-dynamics for Lennard-Jones
+ * systems using the Message Passing Interface (MPI) standard.
+*/
 #include <iostream>
 #include <cmath>
 #include <string>
@@ -12,15 +12,21 @@ systems using the Message Passing Interface (MPI) standard.
 
 using namespace std;
 
-const double RCUT = 2.5; // Potential cut-off length
+const double RCUT = 2.5; ///< Potential cut-off length
 const double MOVED_OUT = -1.0e10;
 
+/**
+ * This class is responsible for updating the state of an atom through the
+ * time-steps in stimulation
+ */
 Atom::Atom()
         : type(0), isResident(true), x(0.0), y(0.0), z(0.0),
           ax(0.0), ay(0.0), az(0.0), vx(0.0), vy(0.0), vz(0.0), shiftCount{}  {}
 
-/* Create subsystem with parameters input parameters to calculate
-   the number of atoms and give them random velocities */
+/**
+ * Subsystem refers to the group of atoms and their properties when the atoms reside in a processor/rank
+ *
+ */
 SubSystem::SubSystem() : pid(0), n(0), nglob(0), comt(0.0), al{}, vid{}, myparity{}, nn{}, sv{}, vSum{}, gvSum{},
                          atoms{}, kinEnergy(0.0), potEnergy(0.0), totEnergy(0.0), temperature(0) {
 
@@ -28,7 +34,7 @@ SubSystem::SubSystem() : pid(0), n(0), nglob(0), comt(0.0), al{}, vid{}, myparit
     MPI_Comm_rank(MPI_COMM_WORLD, &pid);  // My processor ID
 
     // Open pmd.in file and read inputs
-    ifstream ifs("../MD_Engine/pmd.in", ifstream::in);
+    ifstream ifs("./MD_Engine/pmd.in", ifstream::in);
     if (!ifs.is_open()) {
         cerr << "failed to open md input file" << endl;
         terminate();
@@ -45,7 +51,7 @@ SubSystem::SubSystem() : pid(0), n(0), nglob(0), comt(0.0), al{}, vid{}, myparit
     for (int i = 0; i < 3; i++) al[i] = InitUcell[i] / cbrt(Density / 4.0);
     // if (pid == 0) cout << "al = " << al[0] << " " << al[1] <<  " " << al[2] << endl;
 
-    // Prepare the Neighbot-node table
+    // Prepare the Neighbor-node table
     InitNeighborNode(vproc);
 
     // Initialize lattice positions and assign random velocities

@@ -1,4 +1,5 @@
-/** scratch_pad.cpp is an examlpe to demonstrates how
+/**
+ * scratch_pad.cpp is an examlpe to demonstrates how
  * users implement loss functions, specify intial and boundary conditions,
  * and conservation laws for their systems
  */

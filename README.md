@@ -1,6 +1,8 @@
 # PND: Physics-Informed Neural-Network Molecular Dynamics 
 We have developed PND, a differential equation solver software based on physics-informed neural network (PINN) for molecular dynamics simulators. Based on automatic differentiation technique provided by PyTorch, our software allows users to flexibly implement equation of motion for atoms, initial and boundary conditions, and conservation laws as loss function to train the network. PND comes with a parallel molecular dynamic engine in order to examine and optimize loss function design, and different conservation laws and boundary conditions, and hyperparameters, thereby accelerating PINN-based development for molecular applications. 
 
+![pnd scematic](/img/PND_Schematic_2.png)
+
 ## Documentation
 For documentation please visit this [page](https://usccacs.github.io/PND/annotated.html)
 

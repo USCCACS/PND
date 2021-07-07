@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.9.1"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>PND: DSN-MD</title>
+<title>PND: PND: Physics-Informed Neural-Network Molecular Dynamics</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -62,14 +62,18 @@ $(function() {
 </div><!-- top -->
 <div class="PageDoc"><div class="header">
   <div class="headertitle">
-<div class="title">DSN-MD </div>  </div>
+<div class="title"><a class="el" href="class_p_n_d.html">PND</a>: Physics-Informed Neural-Network Molecular Dynamics </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>Differential Solver Neuralnet MD</p>
+<div class="textblock"><p>We have developed <a class="el" href="class_p_n_d.html">PND</a>, a differential equation solver software based on physics-informed neural network (PINN) for molecular dynamics simulators. Based on automatic differentiation technique provided by PyTorch, our software allows users to flexibly implement equation of motion for atoms, initial and boundary conditions, and conservation laws as loss function to train the network. <a class="el" href="class_p_n_d.html">PND</a> comes with a parallel molecular dynamic engine in order to examine and optimize loss function design, and different conservation laws and boundary conditions, and hyperparameters, thereby accelerating PINN-based development for molecular applications.</p>
+<p><img src="/img/PND_Schematic_2.png" alt="pnd scematic" class="inline"/></p>
 <h1><a class="anchor" id="autotoc_md1"></a>
+Documentation</h1>
+<p>For documentation please visit this <a href="https://usccacs.github.io/PND/annotated.html">page</a></p>
+<h1><a class="anchor" id="autotoc_md2"></a>
 Build Command</h1>
 <p>Use CMake to build the target <code>pnd_example</code>. This is binary for predicting energies using auto gradient using hamiltonian. <code>cmake --build . --config Release</code></p>
-<h1><a class="anchor" id="autotoc_md2"></a>
+<h1><a class="anchor" id="autotoc_md3"></a>
 Input Parameters</h1>
 <p>All system input parameters go into pmd.in</p><ul>
 <li>The first line is vproc[3]</li>
@@ -96,7 +100,7 @@ Input Parameters</h1>
 <div class="line">25      # Time steps to predict </div>
 <div class="line">50000   # Training epochs for pre-training</div>
 <div class="line">200000  # Training epochs </div>
-</div><!-- fragment --><h1><a class="anchor" id="autotoc_md3"></a>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md4"></a>
 Build on USC HPC</h1>
 <p>(The following steps are implemented in the <code>build_run_PND_Discovery.sh</code> file. Details provided here)</p>
 <p>Create a compressed source coude file using the follwing command <code>tar -cvzf PND.tgz PND/</code></p>
@@ -126,7 +130,7 @@ Build on USC HPC</h1>
 <div class="line"> </div>
 <div class="line">./pnd_example</div>
 </div><!-- fragment --><p>copy the sbatch file <code>sbatch_PND.sh</code> to the directory level containing <a class="el" href="class_p_n_d.html">PND</a> and run it. This script requests for resources, compresses the source code and runs the build commands listed in <code>build_run_PND_Discovery.sh</code>.</p>
-<h1><a class="anchor" id="autotoc_md4"></a>
+<h1><a class="anchor" id="autotoc_md5"></a>
 Build note on Intel devcloud</h1>
 <div class="fragment"><div class="line">cmake .. -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=dpcpp -DCMAKE_PREFIX_PATH=$PWD/../libtorch/ </div>
 </div><!-- fragment --><p> and edit CMakeFiles/grad_lap.dir/flags.make</p>

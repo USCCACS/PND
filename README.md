@@ -6,6 +6,10 @@ We have developed PND, a differential equation solver software based on physics-
 ## Documentation
 For documentation please visit this [page](https://usccacs.github.io/PND/annotated.html)
 
+## Code Capsule 
+Visit the code capsule [here](https://codeocean.com/capsule/3834622/tree/v1) 
+https://doi.org/10.24433/CO.9413795.v1
+
 ## Build Command
 Use CMake to build the target `pnd_example`. This is binary for predicting energies using auto gradient using hamiltonian.
 `cmake --build . --config Release`

@@ -45,7 +45,7 @@ The following is an example
 
 `build_run_PND_Discovery.sh` script can be used to build on USC HPC
 
-alternatively, the following commands can be used. You will first need to load the modules before building
+Alternatively, the following commands can be used. You will first need to load the modules before building
 and run the executable with the following commands. 
 ```
 module purge

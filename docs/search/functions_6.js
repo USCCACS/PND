@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['shiftatoms_55',['ShiftAtoms',['../class_sub_system.html#ab8496dbbeb9788ef030095e80c13c956',1,'SubSystem']]],
-  ['subsystem_56',['SubSystem',['../class_sub_system.html#abaca4db80c1b8abe8e1e22cd7f20daaa',1,'SubSystem']]]
+  ['loss_73',['Loss',['../class_scratch_pad.html#a5fad54bea607494453b6708525d1d9e0',1,'ScratchPad::Loss()'],['../class_p_n_d.html#a2dbbe37cee376e51dd963d126a5f7d0a',1,'PND::Loss(torch::Tensor t_seq, std::tuple&lt; torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor &gt; icfs, torch::Tensor totalEnergy, torch::Tensor kineticEnergy, torch::Tensor potentialEnergy, int n, int Np, int d)']]],
+  ['losspretrain_74',['LossPreTrain',['../class_p_n_d.html#a32b2c4b182730d341b6569848bd9cf61',1,'PND']]]
 ];

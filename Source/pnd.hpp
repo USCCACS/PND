@@ -58,7 +58,5 @@ public:
                                                      double momentum = 0.99);
 };
 
-
-//torch::Tensor LJ3D_M(int stepsToState, torch::Tensor, int Np);
 #endif //DSN_MD_PND_HPP
 

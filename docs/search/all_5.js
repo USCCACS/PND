@@ -1,5 +1,7 @@
 var searchData=
 [
-  ['loss_13',['Loss',['../class_scratch_pad.html#a5fad54bea607494453b6708525d1d9e0',1,'ScratchPad::Loss()'],['../class_p_n_d.html#a2dbbe37cee376e51dd963d126a5f7d0a',1,'PND::Loss(torch::Tensor t_seq, std::tuple&lt; torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor &gt; icfs, torch::Tensor totalEnergy, torch::Tensor kineticEnergy, torch::Tensor potentialEnergy, int n, int Np, int d)']]],
-  ['losspretrain_14',['LossPreTrain',['../class_p_n_d.html#a32b2c4b182730d341b6569848bd9cf61',1,'PND']]]
+  ['initneighbornode_16',['InitNeighborNode',['../class_sub_system.html#a8380b795c20199fdb9079b792db37bab',1,'SubSystem']]],
+  ['inittemp_17',['InitTemp',['../class_sub_system.html#a9e5c0f61709e490b9fe0f59286e359e3',1,'SubSystem']]],
+  ['initucell_18',['InitUcell',['../class_sub_system.html#a04af0b123c2119bd2acd90a7ad4f2d9a',1,'SubSystem']]],
+  ['isresident_19',['isResident',['../class_atom.html#a40486d44f903ee30fd5981cefc26bda1',1,'Atom']]]
 ];

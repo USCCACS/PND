@@ -44,27 +44,48 @@ public:
     std::array<double, 3> vSum, gvSum;
     std::vector<Atom> atoms; ///< resident and moved in atoms
 
-    std::array<int, 3> vproc{}, InitUcell{}; ///< Unit cell system properties
-    double Density, InitTemp, DeltaT;
-    int StepLimit, StepAvg;
+    std::array<int, 3> vproc{}, ///< Vector processor decomposition of subsystems arranged in a 3D array
+    InitUcell{}; ///< Unit cell system properties
+    double Density, ///< Density of fcc
+    InitTemp, ///< Inital temperature of system
+    DeltaT; ///< Time scale of single step in simulation
+    int StepLimit, ///< Total number of steps to carry out the simulation
+    StepAvg; ///< Average of simulation steps before reporting system information
 
-    double kinEnergy, potEnergy, totEnergy, temperature; ///< Calculated energy of the system at the end of the time-step
+    double kinEnergy, ///< Calculated kinetic energy while simulation
+    potEnergy, ///< Calculated potential energy while simulation
+    totEnergy, ///< Calculated total energy energy while simulation
+    temperature; ///< Calculated temperature of the system at the end of the time-step
 
     /** Constructor - Creates subsystem with with the specified atoms in the input file and assigns random velocities */
     SubSystem();
 
+    /**
+     * Initiates the neighbor node table for the Subsystem decomposed in X,Y & Z as a 3D matrix as defined by vproc
+     * @param vproc Vector processor decomposition of subsystems arranged in a 3D array
+     */
     void InitNeighborNode(std::array<int, 3> vproc);
 
-    // Update Atomic co-ordinates to r(t+Dt)
+    /**
+     * Update Atomic co-ordinates to r(t+Dt)
+     * @param DeltaT duration for which the state must be updated
+     */
     void Update(double DeltaT);
 
-    // Update the velocities after a time-step DeltaT
+    /**
+     * Update the velocities after a time-step DeltaT
+     * @param DeltaT
+     */
     void Kick(double DeltaT);
 
-    // Exchange boundary-atom co-ordinates among neighbor nodes
+
+    /**
+     * Exchange boundary-atom co-ordinates among neighbor nodes
+     */
     void AtomCopy();
 
-    /**Send moved-out atoms to neighbor nodes and receive moved-in atoms
+    /**
+     * Send moved-out atoms to neighbor nodes and receive moved-in atoms
      * from neighbor nodes returns the indexes of the atoms that have
      * moved
      */
@@ -84,8 +105,8 @@ public:
     /**
      * Returns true if an Atom lies in them boundary to a neighbor ID
      *
-     * @param atom
-     * @param ku
+     * @param atom atom id in the system
+     * @param ku the neighboring direction w.r.t the subsystem
      * @return 1 true, 0 false
     */
     int bbd(Atom atom, int ku);
@@ -93,29 +114,52 @@ public:
     /**
      * Return true if an Atom lies in them boundary to a neighbor ID
      *
-     * @param atom
-     * @param ku
-     * @return
+     * @param atom atom id in the system
+     * @param ku the neighboring direction w.r.t the subsystem
+     * @return 1 true, 0 false
      */
     int bmv(Atom atom, int ku);
 
-    //Evaluates physical properties: kinetic, potential & total energies
+    /**
+     * Evaluates physical properties: kinetic, potential & total energies
+     * @param stepCount Time step corresponding to the which the evaluation takes place
+     */
     void EvalProps(int stepCount);
 
-    // Write out XYZ co-ordinates from each frame into separate files
+    /**
+     * Write out XYZ co-ordinates from each frame into separate files
+     *
+     * @param step
+     */
     void WriteXYZ(int step);
 
+    /**
+     * Method to return modulus
+     * @param a
+     * @param b
+     * @return
+     */
     static double Dmod(double a, double b) {
         int n;
         n = (int) (a / b);
         return (a - b * n);
     }
 
+    /**
+     * Method to generat erandom double value from a seed
+     * @param seed
+     * @return
+     */
     static double RandR(double *seed) {
         *seed = Dmod(*seed * DMUL, D2P31M);
         return (*seed / D2P31M);
     }
 
+    /**
+     * Fills up a double pointer of length 3 with random values
+     * @param p
+     * @param seed
+     */
     static void RandVec3(double *p, double *seed) {
         double x = 0, y = 0, s = 2.0;
         while (s > 1.0) {

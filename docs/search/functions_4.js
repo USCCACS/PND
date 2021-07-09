@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['maintrain_52',['mainTrain',['../class_scratch_pad.html#a63274e869762ad024c20acc6ac73a224',1,'ScratchPad::mainTrain()'],['../class_p_n_d.html#a6e424a556add34b785632f950abc2726',1,'PND::mainTrain()']]]
+  ['initneighbornode_71',['InitNeighborNode',['../class_sub_system.html#a8380b795c20199fdb9079b792db37bab',1,'SubSystem']]]
 ];

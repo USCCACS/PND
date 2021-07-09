@@ -1,8 +1,6 @@
 var searchData=
 [
-  ['scratchpad_24',['ScratchPad',['../class_scratch_pad.html',1,'']]],
-  ['shiftatoms_25',['ShiftAtoms',['../class_sub_system.html#ab8496dbbeb9788ef030095e80c13c956',1,'SubSystem']]],
-  ['shiftcount_26',['shiftCount',['../class_atom.html#a207dd3c11c96011ef3fcc7cde89d7ad5',1,'Atom']]],
-  ['subsystem_27',['SubSystem',['../class_sub_system.html',1,'SubSystem'],['../class_sub_system.html#abaca4db80c1b8abe8e1e22cd7f20daaa',1,'SubSystem::SubSystem()']]],
-  ['sv_28',['sv',['../class_sub_system.html#a656cb0f33aed305f657927204c67941e',1,'SubSystem']]]
+  ['n_26',['n',['../class_sub_system.html#a42cfb1d9c238f787127aa098cab7f71d',1,'SubSystem']]],
+  ['nglob_27',['nglob',['../class_sub_system.html#ae1a3b78f0a6264305ef8214b9d908c31',1,'SubSystem']]],
+  ['nn_28',['nn',['../class_sub_system.html#ac04d0ea13f2d21cf5e24dcaca02ff221',1,'SubSystem']]]
 ];

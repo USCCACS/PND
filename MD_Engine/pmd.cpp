@@ -30,7 +30,7 @@ Atom::Atom()
 SubSystem::SubSystem() : pid(0), n(0), nglob(0), comt(0.0), al{}, vid{}, myparity{}, nn{}, sv{}, vSum{}, gvSum{},
                          atoms{}, kinEnergy(0.0), potEnergy(0.0), totEnergy(0.0), temperature(0) {
 
-    int pid; // Sequential processor ID
+    int pid;
     MPI_Comm_rank(MPI_COMM_WORLD, &pid);  // My processor ID
 
     // Open pmd.in file and read inputs
@@ -51,14 +51,13 @@ SubSystem::SubSystem() : pid(0), n(0), nglob(0), comt(0.0), al{}, vid{}, myparit
     for (int i = 0; i < 3; i++) al[i] = InitUcell[i] / cbrt(Density / 4.0);
     // if (pid == 0) cout << "al = " << al[0] << " " << al[1] <<  " " << al[2] << endl;
 
-    // Prepare the Neighbor-node table
     InitNeighborNode(vproc);
 
     // Initialize lattice positions and assign random velocities
     array<double, 3> c{}, gap{};
     int j, a, nX, nY, nZ;
 
-    /* FCC atoms in the original unit cell */
+    // FCC atoms in the original unit cell
     vector<vector<double> > origAtom = {{0.0, 0.0, 0.0},
                                         {0.0, 0.5, 0.5},
                                         {0.5, 0.0, 0.5},
@@ -180,13 +179,12 @@ void SubSystem::Kick(double DeltaT) {
     }
 }
 
-// Exchange boundaty-atom co-ordinates among neighbor nodes
+// Exchange boundary-atom co-ordinates among neighbor nodes
 void SubSystem::AtomCopy() {
     int kd, kdd, i, ku, inode, nsd, nrc;
     double com1 = 0;
     vector<vector<int> > lsb(6);
 
-    //atoms.erase(remove_if(atoms.begin(), atoms.end(), [](Atom atom) {return !atom.isResident;}), atoms.end());
     /* Main loop over x, y & z directions starts--------------------------*/
     for (kd = 0; kd < 3; kd++) {
 
@@ -216,12 +214,12 @@ void SubSystem::AtomCopy() {
             vector<double> recvBuf;
 
             ku = 2 * kd + kdd;
-            // if(pid ==0) cout << "ku = " << ku << endl;
+
             inode = nn[ku]; /* Neighbor node ID */
-            // if(pid == 0) cout << "inode = " << inode << endl;
+
 
             nsd = lsb[ku].size();
-            // cout << "copy number " << nsd << endl;
+
 
             /* Even node: send & recv */
             if (myparity[kd] == 0) {
@@ -229,13 +227,13 @@ void SubSystem::AtomCopy() {
                 MPI_Recv(&nrc, 1, MPI_INT, MPI_ANY_SOURCE, 10,
                          MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             }
-                /* Odd node: recv & send */
+            /* Odd node: recv & send */
             else if (myparity[kd] == 1) {
                 MPI_Recv(&nrc, 1, MPI_INT, MPI_ANY_SOURCE, 10,
                          MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                 MPI_Send(&nsd, 1, MPI_INT, inode, 10, MPI_COMM_WORLD);
             }
-                /* Single layer: Exchange information with myself */
+            /* Single layer: Exchange information with myself */
             else
                 nrc = nsd;
 
@@ -263,13 +261,13 @@ void SubSystem::AtomCopy() {
                 MPI_Recv(&recvBuf[0], 4 * nrc, MPI_DOUBLE, MPI_ANY_SOURCE, 20,
                          MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             }
-                /* Odd node: recv & send */
+            /* Odd node: recv & send */
             else if (myparity[kd] == 1) {
                 MPI_Recv(&recvBuf[0], 4 * nrc, MPI_DOUBLE, MPI_ANY_SOURCE, 20,
                          MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                 MPI_Send(&sendBuf[0], 4 * nsd, MPI_DOUBLE, inode, 20, MPI_COMM_WORLD);
             }
-                /* Single layer: Exchange information with myself */
+            /* Single layer: Exchange information with myself */
             else
                 sendBuf.swap(recvBuf);
 
@@ -285,14 +283,6 @@ void SubSystem::AtomCopy() {
                 rAtom.y = recvBuf[i];
                 ++i;
                 rAtom.z = recvBuf[i];
-                // if(pid == 0) cout << " arriving in atom copy - x: " << rAtom.x;
-                //   rAtom.x = *it_recv;
-                //   ++it_recv;
-                // if(pid == 0) cout << " y: " << rAtom.y;
-                //   rAtom.y = *it_recv;
-                //   ++it_recv;
-                // if(pid == 0) cout << " z: " << rAtom.z << endl;
-                //   rAtom.z = *it_recv;
 
                 atoms.push_back(rAtom);
             }
@@ -333,14 +323,10 @@ vector<int> SubSystem::AtomMove(bool shouldTrack) {
                 /* Move to the lower direction */
                 if (bmv(*it_atom, kul)) {
                     mvque[kul].push_back(i);
-//                     if(pid == 0) cout << "Tested positive for move " << it_atom->x << " " << it_atom->z << " " << it_atom->y << endl;
-//                     if(pid == 0) cout << "Tested positive for move, atom " << i << endl;
                 }
                 /* Move to the higher direction */
                 else if (bmv(*it_atom, kuh)) {
                     mvque[kuh].push_back(i);
-//                     if(pid == 0) cout << "Tested positive for move " << it_atom->x << " " << it_atom->z << " " << it_atom->y << endl;
-//                    if(pid == 0) cout << "Tested positive for move, atom " << i << endl;
                 }
             }
         }
@@ -351,17 +337,15 @@ vector<int> SubSystem::AtomMove(bool shouldTrack) {
 
         /* Loop over the lower & higher directions */
         for (kdd = 0; kdd < 2; kdd++) {
-            // if(pid ==0) cout << "kdd " << kdd << endl;
+
             vector<double> sendBuf;
             vector<double> recvBuf;
 
             ku = 2 * kd + kdd;
-            // if(pid ==0) cout << "ku = " << ku << endl;
+
             inode = nn[ku]; /* Neighbor node ID */
-            // if(pid == 0) cout << "inode = " << inode << endl;
 
             nsd = mvque[ku].size();
-            // cout << "copy number " << nsd << endl;
 
             /* Even node: send & recv */
             if (myparity[kd] == 0) {
@@ -369,13 +353,13 @@ vector<int> SubSystem::AtomMove(bool shouldTrack) {
                 MPI_Recv(&nrc, 1, MPI_INT, MPI_ANY_SOURCE, 10,
                          MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             }
-                /* Odd node: recv & send */
+            /* Odd node: recv & send */
             else if (myparity[kd] == 1) {
                 MPI_Recv(&nrc, 1, MPI_INT, MPI_ANY_SOURCE, 10,
                          MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                 MPI_Send(&nsd, 1, MPI_INT, inode, 10, MPI_COMM_WORLD);
             }
-                /* Single layer: Exchange information with myself */
+            /* Single layer: Exchange information with myself */
             else
                 nrc = nsd;
 
@@ -394,6 +378,7 @@ vector<int> SubSystem::AtomMove(bool shouldTrack) {
                 sendBuf.push_back(atoms[*it_index].x - sv[ku][0]);
                 sendBuf.push_back(atoms[*it_index].y - sv[ku][1]);
                 sendBuf.push_back(atoms[*it_index].z - sv[ku][2]);
+
                 // In AtomMove we will also be considering the velocities
                 sendBuf.push_back(atoms[*it_index].vx);
                 sendBuf.push_back(atoms[*it_index].vy);
@@ -403,10 +388,6 @@ vector<int> SubSystem::AtomMove(bool shouldTrack) {
                 for (int j = 0; j < 6; ++j) {
                     sendBuf.push_back(atoms[*it_index].shiftCount[j]);
                 }
-                // if(pid == 0) cout << "move - " << atoms[*it_index].x << " ";
-                // if(pid ==0) cout << atoms[*it_index].y << " ";
-                // if(pid ==0) cout << atoms[*it_index].z << " " << endl;
-                //atoms[*it_index].isResident = false;
 
                 // Mark the atom as moved out
                 atoms[*it_index].x = MOVED_OUT;
@@ -422,13 +403,13 @@ vector<int> SubSystem::AtomMove(bool shouldTrack) {
                 MPI_Recv(&recvBuf[0], 13 * nrc, MPI_DOUBLE, MPI_ANY_SOURCE, 20,
                          MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             }
-                /* Odd node: recv & send */
+            /* Odd node: recv & send */
             else if (myparity[kd] == 1) {
                 MPI_Recv(&recvBuf[0], 13 * nrc, MPI_DOUBLE, MPI_ANY_SOURCE, 20,
                          MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                 MPI_Send(&sendBuf[0], 13 * nsd, MPI_DOUBLE, inode, 20, MPI_COMM_WORLD);
             }
-                /* Single layer: Exchange information with myself */
+            /* Single layer: Exchange information with myself */
             else
                 sendBuf.swap(recvBuf);
 
@@ -463,7 +444,6 @@ vector<int> SubSystem::AtomMove(bool shouldTrack) {
                         break;
                     }
                 }
-//	atoms.push_back(rAtom);
             }
 
             /* Internode synchronization */
@@ -477,12 +457,8 @@ vector<int> SubSystem::AtomMove(bool shouldTrack) {
 
     /* Compress resident arrays including new immigrants */
 
-    // if(pid == 0) cout << "atoms before AtomMove = " << n << endl;
-//  atoms.erase(remove_if(atoms.begin(), atoms.end(),
-//			[](Atom atom) { return atom.x <= MOVED_OUT; }), atoms.end());
     n = atoms.size();
     MPI_Allreduce(&n, &nglob, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-    // if(pid == 0) cout << "atoms after AtomMove = " << n << endl;
 
     return boundaryCrossingAtomIndices;
 
@@ -492,9 +468,9 @@ void SubSystem::ShiftAtoms() {
     for (auto &atom : atoms) {
         for (int ku = 0; ku < 6; ++ku) {
             if(atom.shiftCount[ku] > 0) {
-                cout << atom.x << " gets shifted by " << sv[ku][0] << endl;
-                cout << atom.y << " gets shifted by " << sv[ku][1] << endl;
-                cout << atom.z << " gets shifted by " << sv[ku][2] << endl;
+                cout << atom.x << " gets shifted by " << sv[ku][0] << "along x"<< endl;
+                cout << atom.y << " gets shifted by " << sv[ku][1] << "along y"<< endl;
+                cout << atom.z << " gets shifted by " << sv[ku][2] << "along z"<< endl;
             }
             atom.x = atom.x + (atom.shiftCount[ku] * sv[ku][0]);
             atom.y = atom.y + (atom.shiftCount[ku] * sv[ku][1]);
@@ -527,12 +503,10 @@ void SubSystem::WrapAtoms() {
                 /* Move to the lower direction */
                 if (bmv(*it_atom, kul)) {
                     mvque[kul].push_back(i);
-                    // if(pid == 0) cout << "Tested positive for move " << it_atom->x << " " << it_atom->z << " " << it_atom->y << endl;
                 }
                     /* Move to the higher direction */
                 else if (bmv(*it_atom, kuh)) {
                     mvque[kuh].push_back(i);
-                    // if(pid == 0) cout << "Tested positive for move " << it_atom->x << " " << it_atom->z << " " << it_atom->y << endl;}
                 }
             }
 
@@ -544,14 +518,11 @@ void SubSystem::WrapAtoms() {
 
         /* Loop over the lower & higher directions */
         for (kdd = 0; kdd < 2; kdd++) {
-            // if(pid ==0) cout << "kdd " << kdd << endl;
             vector<double> sendBuf;
             vector<double> recvBuf;
 
             ku = 2 * kd + kdd;
-            // if(pid ==0) cout << "ku = " << ku << endl;
             inode = nn[ku]; /* Neighbor node ID */
-            // if(pid == 0) cout << "inode = " << inode << endl;
 
             nsd = mvque[ku].size();
 

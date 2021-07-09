@@ -1,6 +1,5 @@
 var searchData=
 [
-  ['n_17',['n',['../class_sub_system.html#a42cfb1d9c238f787127aa098cab7f71d',1,'SubSystem']]],
-  ['nglob_18',['nglob',['../class_sub_system.html#ae1a3b78f0a6264305ef8214b9d908c31',1,'SubSystem']]],
-  ['nn_19',['nn',['../class_sub_system.html#ac04d0ea13f2d21cf5e24dcaca02ff221',1,'SubSystem']]]
+  ['loss_22',['Loss',['../class_scratch_pad.html#a5fad54bea607494453b6708525d1d9e0',1,'ScratchPad::Loss()'],['../class_p_n_d.html#a2dbbe37cee376e51dd963d126a5f7d0a',1,'PND::Loss(torch::Tensor t_seq, std::tuple&lt; torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor &gt; icfs, torch::Tensor totalEnergy, torch::Tensor kineticEnergy, torch::Tensor potentialEnergy, int n, int Np, int d)']]],
+  ['losspretrain_23',['LossPreTrain',['../class_p_n_d.html#a32b2c4b182730d341b6569848bd9cf61',1,'PND']]]
 ];

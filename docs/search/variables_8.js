@@ -1,7 +1,7 @@
 var searchData=
 [
-  ['vid_77',['vid',['../class_sub_system.html#a069e89743d661a1d2f03097f8fe2953a',1,'SubSystem']]],
-  ['vx_78',['vx',['../class_atom.html#aa863fe36c7adbffe1a02b2d810a5b844',1,'Atom']]],
-  ['vy_79',['vy',['../class_atom.html#a30fddb54fb914f788b3601cfaebfa099',1,'Atom']]],
-  ['vz_80',['vz',['../class_atom.html#a372ec484b6cc866c67c4ecd33355e7ad',1,'Atom']]]
+  ['shiftcount_105',['shiftCount',['../class_atom.html#a207dd3c11c96011ef3fcc7cde89d7ad5',1,'Atom']]],
+  ['stepavg_106',['StepAvg',['../class_sub_system.html#a8efcc130bc2631c2c6391da32a8391ea',1,'SubSystem']]],
+  ['steplimit_107',['StepLimit',['../class_sub_system.html#a9d009c71795529b6623e79aecf24ec65',1,'SubSystem']]],
+  ['sv_108',['sv',['../class_sub_system.html#a656cb0f33aed305f657927204c67941e',1,'SubSystem']]]
 ];

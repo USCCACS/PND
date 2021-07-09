@@ -102,35 +102,20 @@ Input Parameters</h1>
 <div class="line">200000  # Training epochs </div>
 </div><!-- fragment --><h1><a class="anchor" id="autotoc_md4"></a>
 Build on USC HPC</h1>
-<p>(The following steps are implemented in the <code>build_run_PND_Discovery.sh</code> file. Details provided here)</p>
-<p>Create a compressed source coude file using the follwing command <code>tar -cvzf PND.tgz PND/</code></p>
-<p>To build on HPC you will need to load the offered python module with the folling commands. </p><div class="fragment"><div class="line">module purge</div>
+<p><code>build_run_PND_Discovery.sh</code> script can be used to build on USC HPC</p>
+<p>Alternatively, the following commands can be used. You will first need to load the modules before building and run the executable with the following commands. </p><div class="fragment"><div class="line">module purge</div>
 <div class="line">module load usc</div>
 <div class="line">module load cuda/10.1.243 python/3.7.6 cmake/3.16.2 cudnn/8.0.2-10.1</div>
-</div><!-- fragment --><p> The next step is to use CMake to build the target</p>
-<div class="fragment"><div class="line">cds2 # change into your scratch directory</div>
-<div class="line"> </div>
-<div class="line">rm -rf run_PND</div>
-<div class="line"> </div>
-<div class="line">mkdir run_PND; cd run_PND</div>
-<div class="line"> </div>
-<div class="line">cp ~/PND.tgz ./</div>
-<div class="line"> </div>
-<div class="line">tar -xzvf PND.tgz </div>
-<div class="line"> </div>
-<div class="line">cd PND/</div>
-<div class="line"> </div>
-<div class="line">mkdir build; cd build</div>
 <div class="line"> </div>
 <div class="line">python3 -c &#39;import torch ; print(torch.utils.cmake_prefix_path)&#39;</div>
 <div class="line"> </div>
-<div class="line">CC=gcc CXX=g++ cmake -DCMAKE_PREFIX_PATH=&#39;/spack/apps/linux-centos7-x86_64/gcc-8.3.0/python-3.7.6-dd2am3dyvlpovhd4rizwfzc45wnsajxf/lib/python3.7/site-packages/torch/share/cmake;/usr/lib64&#39; ../</div>
+<div class="line">CC=gcc CXX=g++ </div>
+<div class="line">cmake -DCMAKE_PREFIX_PATH=&#39;/spack/apps/linux-centos7-x86_64/gcc-8.3.0/python-3.7.6-dd2am3dyvlpovhd4rizwfzc45wnsajxf/lib/python3.7/site-packages/torch/share/cmake;/usr/lib64&#39; .</div>
 <div class="line"> </div>
 <div class="line">cmake --build . --config Release</div>
 <div class="line"> </div>
-<div class="line">./pnd_example</div>
-</div><!-- fragment --><p>copy the sbatch file <code>sbatch_PND.sh</code> to the directory level containing <a class="el" href="class_p_n_d.html">PND</a> and run it. This script requests for resources, compresses the source code and runs the build commands listed in <code>build_run_PND_Discovery.sh</code>.</p>
-<h1><a class="anchor" id="autotoc_md5"></a>
+<div class="line">mpirun -np 1 -quiet ./pnd_example./pnd_example</div>
+</div><!-- fragment --> <h1><a class="anchor" id="autotoc_md5"></a>
 Build note on Intel devcloud</h1>
 <div class="fragment"><div class="line">cmake .. -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=dpcpp -DCMAKE_PREFIX_PATH=$PWD/../libtorch/ </div>
 </div><!-- fragment --><p> and edit CMakeFiles/grad_lap.dir/flags.make</p>

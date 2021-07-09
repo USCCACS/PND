@@ -43,48 +43,25 @@ The following is an example
 
 ## Build on USC HPC
 
-(The following steps are implemented in the `build_run_PND_Discovery.sh` file. Details provided here)
+`build_run_PND_Discovery.sh` script can be used to build on USC HPC
 
-Create a compressed source coude file using the follwing command
-`tar -cvzf PND.tgz PND/`
-
-To build on HPC you will need to load the offered python module with the folling commands. 
+alternatively, the following commands can be used. You will first need to load the modules before building
+and run the executable with the following commands. 
 ```
 module purge
 module load usc
 module load cuda/10.1.243 python/3.7.6 cmake/3.16.2 cudnn/8.0.2-10.1
-```
-The next step is to use CMake to build the target 
-
-```
-cds2 # change into your scratch directory
-
-rm -rf run_PND
-
-mkdir run_PND; cd run_PND
-
-cp ~/PND.tgz ./
-
-tar -xzvf PND.tgz 
-
-cd PND/
-
-mkdir build; cd build
 
 python3 -c 'import torch ; print(torch.utils.cmake_prefix_path)'
 
-CC=gcc CXX=g++ cmake -DCMAKE_PREFIX_PATH='/spack/apps/linux-centos7-x86_64/gcc-8.3.0/python-3.7.6-dd2am3dyvlpovhd4rizwfzc45wnsajxf/lib/python3.7/site-packages/torch/share/cmake;/usr/lib64' ../
+CC=gcc CXX=g++ 
+cmake -DCMAKE_PREFIX_PATH='/spack/apps/linux-centos7-x86_64/gcc-8.3.0/python-3.7.6-dd2am3dyvlpovhd4rizwfzc45wnsajxf/lib/python3.7/site-packages/torch/share/cmake;/usr/lib64' .
 
 cmake --build . --config Release
 
-./pnd_example
+mpirun -np 1 -quiet ./pnd_example./pnd_example
 
 ```
-
-copy the sbatch file `sbatch_PND.sh` to the directory level containing PND and run it.
-This script requests for resources, compresses the source code and runs the build commands listed in 
-`build_run_PND_Discovery.sh`.
-
 # Build note on Intel devcloud
 ```
 cmake .. -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=dpcpp -DCMAKE_PREFIX_PATH=$PWD/../libtorch/ 

@@ -238,18 +238,12 @@ int main(int argc, char **argv) {
     torch::Tensor potential_energy_entire = torch::from_blob(potential_energy_vect.data(), {numberOfTimeSequences, 1});
     torch::Tensor potentialEnergy = potential_energy_entire.narrow(0, subsystem.StepLimit, pingu.StepTrain);
     cout << "obtained md potential energy matrix" << endl;
-    // Set initial weights
-    //    torch::Tensor w0b0_params = torch::ones({2*n, 1});
-    //    torch::Tensor b1_params = md_qt[0].unsqueeze(1);
-    //    torch::Tensor w1_params = torch::rand({2*n*3*Np, 1});
-    //    torch::Tensor params = torch::cat({w0b0_params, w1_params, b1_params}, 0);
+
     // Set the inital and final values
     torch::Tensor initialPositions = md_qt.narrow(1, 0, 3*Np)[1];
     cout << "obtained initial positions" << endl;
     torch::Tensor finalPositions = md_qt.narrow(1, 0, 3*Np)[pingu.StepTrain - 2];
     cout << "obtained final positions" << endl;
-//    cout << "Final positions are: " << finalPositions << endl;
-//    cout << "pen ultimate positions are: " << md_qt.narrow(1, 0, 3*Np)[pingu.StepTrain - 2] << endl;
     torch::Tensor initialVelocities = md_qt.narrow(1, 3 * Np, 3*Np)[1];
     cout << "obtained initial velocities" << endl;
     torch::Tensor finalVelocities = md_qt.narrow(1, 3 * Np, 3*Np)[pingu.StepTrain - 2];
@@ -315,7 +309,6 @@ r & rv are propagated by DeltaT using the velocity-Verlet scheme.
 }
 
 std::tuple<float, torch::Tensor> LJ3D(SubSystem &predictedSystem, torch::Tensor qt, int Np) {
-//    qt.set_requires_grad(false);
 
     std::vector<torch::Tensor> positionsAlongAxis = torch::split(qt, Np, 0);
     int index_pt = 0;
@@ -339,10 +332,6 @@ std::tuple<float, torch::Tensor> LJ3D(SubSystem &predictedSystem, torch::Tensor 
 }
 
 std::tuple<torch::Tensor, torch::Tensor> LJ3D_M(SubSystem checkPointState, torch::Tensor qt, int Np) {
-//    qt.set_requires_grad(false);
-
-//    int sid;
-//    MPI_Comm_rank(MPI_COMM_WORLD, &sid);
     SubSystem predictedSystem = checkPointState;
     std::vector<torch::Tensor> positionsAlongTime = torch::chunk(qt, qt.sizes()[0], 0);
     int count = 1;
@@ -364,11 +353,17 @@ std::tuple<torch::Tensor, torch::Tensor> LJ3D_M(SubSystem checkPointState, torch
     return std::make_tuple(potentials, forces);
 }
 
+/**
+ *  Given atomic coordinates, r[0:n+nb-1][], for the extended (i.e.,
+ *  resident & copied) system, computes the acceleration, ra[0:n-1][], for
+ *  the residents.
+ *
+ * @param subsystem
+ * @return
+ */
 double ComputeAccel(SubSystem &subsystem) {
     /*----------------------------------------------------------------------
-      Given atomic coordinates, r[0:n+nb-1][], for the extended (i.e.,
-      resident & copied) system, computes the acceleration, ra[0:n-1][], for
-      the residents.
+
       ----------------------------------------------------------------------*/
     int i, j, a, lc2[3], lcyz2, lcxyz2, mc[3], c, mc1[3], c1;
     int bintra;
@@ -389,10 +384,6 @@ double ComputeAccel(SubSystem &subsystem) {
         lc[a] = subsystem.al[a] / RCUT;
         rc[a] = subsystem.al[a] / lc[a];
     }
-//     if (subsystem.pid == 0) {
-//       cout << "lc = " << lc[0] << " " << lc[1] << " " << lc[2] << endl;
-//       cout << "rc = " << rc[0] << " " << rc[1] << " " << rc[2] << endl;
-//     }
 
     /* Constants for potential truncation */
     rr = RCUT * RCUT;
@@ -420,7 +411,6 @@ double ComputeAccel(SubSystem &subsystem) {
     for (c = 0; c < lcxyz2; c++) head.push_back(EMPTY);
 
     /* Scan atoms to construct headers, head, & linked lists, lscl */
-    // if(subsystem.pid == 0)cout << "atoms in subsystem  = "  << subsystem.atoms.size() << endl;
     for (auto it_atom = subsystem.atoms.begin(); it_atom != subsystem.atoms.end(); ++it_atom) {
         mc[0] = (it_atom->x + rc[0]) / rc[0];
         mc[1] = (it_atom->y + rc[1]) / rc[1];
@@ -436,7 +426,7 @@ double ComputeAccel(SubSystem &subsystem) {
 
     /* Calculate pair interaction---------------------------------------*/
     rrCut = RCUT * RCUT;
-//    cout << "calculating pair interaction ";
+
     /* Scan inner cells */
     for (mc[0] = 1; mc[0] <= lc[0]; (mc[0])++)
         for (mc[1] = 1; mc[1] <= lc[1]; (mc[1])++)
@@ -444,7 +434,6 @@ double ComputeAccel(SubSystem &subsystem) {
                 /* Calculate a scalar cell index */
                 c = mc[0] * lcyz2 + mc[1] * lc2[2] + mc[2];
                 /* Skip this cell if empty */
-                //if (head.find(c) == head.end()) continue;
                 if (head[c] == EMPTY) continue;
 
                 /* Scan the neighbor cells (including itself) of cell c */
@@ -454,7 +443,6 @@ double ComputeAccel(SubSystem &subsystem) {
 
                             /* Calculate the scalar cell index of the neighbor cell */
                             c1 = mc1[0] * lcyz2 + mc1[1] * lc2[2] + mc1[2];
-                            //if(subsystem.pid == 0) cout << "c1 = " << c1 <<endl;
                             /* Skip this neighbor cell if empty */
                             if (head[c1] == EMPTY) continue;
 
@@ -465,14 +453,13 @@ double ComputeAccel(SubSystem &subsystem) {
                                 /* Scan atom j in cell c1 */
                                 j = head[c1];
                                 while (j != EMPTY) {
-                                    //if(subsystem.pid == 0)cout << "i & j :" << i << " " << j << endl;
                                     /* No calculation with itself */
                                     if (j != i) {
                                         /* Logical flag: bintra(true)- or inter(false)-pair atom */
                                         bintra = (j < subsystem.n);
 
                                         /* Pair vector dr = r[i] - r[j] */
-//                                        cout << "Inside compute_accel p " << subsystem.atoms[i].x << " " << subsystem.atoms[i].y << " "  << subsystem.atoms[i].z << endl;
+
                                         dr[0] = subsystem.atoms[i].x - subsystem.atoms[j].x;
                                         dr[1] = subsystem.atoms[i].y - subsystem.atoms[j].y;
                                         dr[2] = subsystem.atoms[i].z - subsystem.atoms[j].z;
@@ -487,24 +474,19 @@ double ComputeAccel(SubSystem &subsystem) {
                                             r1 = sqrt(rr);
                                             fcVal = 48.0 * ri2 * ri6 * (ri6 - 0.5) + Duc / r1;
                                             vVal = 4.0 * ri6 * (ri6 - 1.0) - Uc - Duc * (r1 - RCUT);
-//                                                cout << "interatomic distance(rr) = " << rr << " fcVal= " << fcVal << " vVal= "<< vVal << endl;
-                                            //if(subsystem.pid == 0) cout << " atom " << j << " ri2 :" << ri2 << " ri6 " << ri6 << " r1 " << r1 << " fcVal " << fcVal << " vVal " << vVal << " bintra " << bintra << endl;
                                             if (bintra) lpe += vVal; else lpe += 0.5 * vVal;
 
                                             f = fcVal * dr[0];
                                             subsystem.atoms[i].ax += f;
                                             if (bintra) subsystem.atoms[j].ax -= f;
-//                                            if(subsystem.pid == 0) cout << "accleration x" << subsystem.atoms[j].ax << " factor " << " : " << f << endl;
 
                                             f = fcVal * dr[1];
                                             subsystem.atoms[i].ay += f;
                                             if (bintra) subsystem.atoms[j].ay -= f;
-//                                            if(subsystem.pid == 0) cout << "accleration y" << subsystem.atoms[j].ay << " factor " << " : " << f << endl;
 
                                             f = fcVal * dr[2];
                                             subsystem.atoms[i].az += f;
                                             if (bintra) subsystem.atoms[j].az -= f;
-//                                            if(subsystem.pid == 0) cout << "accleration z" << subsystem.atoms[j].az << " factor " << " : " << f << endl;
                                         }
                                     } /* Endif not self */
 
@@ -517,21 +499,21 @@ double ComputeAccel(SubSystem &subsystem) {
                         } /* Endfor neighbor cells, c1 */
 
             } /* Endfor central cell, c */
-//    cout << " finished ";
     /* Global potential energy */
-    // if(subsystem.pid == 0) cout << "local potential energy " << lpe << endl;
-//    cout << "local potential energy " << lpe << endl;
     MPI_Allreduce(&lpe, &subsystem.potEnergy, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
     return lpe;
 }
 
+/**
+ * Given atomic coordinates, r[0:n+nb-1][], for the extended (i.e.,
+ * resident & copied) system, computes the acceleration, ra[0:n-1][], for
+ * the residents.
+ * @param subsystem
+ * @return
+ */
 std::tuple<float, torch::Tensor> ComputeAccelPredicted(SubSystem &subsystem) {
-    /*----------------------------------------------------------------------
-      Given atomic coordinates, r[0:n+nb-1][], for the extended (i.e.,
-      resident & copied) system, computes the acceleration, ra[0:n-1][], for
-      the residents.
-      ----------------------------------------------------------------------*/
+
     int i, j, a, lc2[3], lcyz2, lcxyz2, mc[3], c, mc1[3], c1;
     int bintra;
     double dr[3], rr, ri2, ri6, r1, rrCut, fcVal, f, vVal, lpe;
@@ -551,10 +533,6 @@ std::tuple<float, torch::Tensor> ComputeAccelPredicted(SubSystem &subsystem) {
         lc[a] = subsystem.al[a] / RCUT;
         rc[a] = subsystem.al[a] / lc[a];
     }
-//     if (subsystem.pid == 0) {
-//       cout << "lc = " << lc[0] << " " << lc[1] << " " << lc[2] << endl;
-//       cout << "rc = " << rc[0] << " " << rc[1] << " " << rc[2] << endl;
-//     }
 
     /* Constants for potential truncation */
     rr = RCUT * RCUT;
@@ -582,7 +560,6 @@ std::tuple<float, torch::Tensor> ComputeAccelPredicted(SubSystem &subsystem) {
     for (c = 0; c < lcxyz2; c++) head.push_back(EMPTY);
 
     /* Scan atoms to construct headers, head, & linked lists, lscl */
-    // if(subsystem.pid == 0)cout << "atoms in subsystem  = "  << subsystem.atoms.size() << endl;
     for (auto it_atom = subsystem.atoms.begin(); it_atom != subsystem.atoms.end(); ++it_atom) {
         mc[0] = (it_atom->x + rc[0]) / rc[0];
         mc[1] = (it_atom->y + rc[1]) / rc[1];
@@ -598,7 +575,6 @@ std::tuple<float, torch::Tensor> ComputeAccelPredicted(SubSystem &subsystem) {
 
     /* Calculate pair interaction---------------------------------------*/
     rrCut = RCUT * RCUT;
-//    cout << "calculating pair interaction ";
     /* Scan inner cells */
     for (mc[0] = 1; mc[0] <= lc[0]; (mc[0])++)
         for (mc[1] = 1; mc[1] <= lc[1]; (mc[1])++)
@@ -606,7 +582,6 @@ std::tuple<float, torch::Tensor> ComputeAccelPredicted(SubSystem &subsystem) {
                 /* Calculate a scalar cell index */
                 c = mc[0] * lcyz2 + mc[1] * lc2[2] + mc[2];
                 /* Skip this cell if empty */
-                //if (head.find(c) == head.end()) continue;
                 if (head[c] == EMPTY) continue;
 
                 /* Scan the neighbor cells (including itself) of cell c */
@@ -616,7 +591,6 @@ std::tuple<float, torch::Tensor> ComputeAccelPredicted(SubSystem &subsystem) {
 
                             /* Calculate the scalar cell index of the neighbor cell */
                             c1 = mc1[0] * lcyz2 + mc1[1] * lc2[2] + mc1[2];
-                            //if(subsystem.pid == 0) cout << "c1 = " << c1 <<endl;
                             /* Skip this neighbor cell if empty */
                             if (head[c1] == EMPTY) continue;
 
@@ -627,14 +601,12 @@ std::tuple<float, torch::Tensor> ComputeAccelPredicted(SubSystem &subsystem) {
                                 /* Scan atom j in cell c1 */
                                 j = head[c1];
                                 while (j != EMPTY) {
-                                    //if(subsystem.pid == 0)cout << "i & j :" << i << " " << j << endl;
                                     /* No calculation with itself */
                                     if (j != i) {
                                         /* Logical flag: bintra(true)- or inter(false)-pair atom */
                                         bintra = (j < subsystem.n);
 
                                         /* Pair vector dr = r[i] - r[j] */
-//                                        cout << "Inside compute_accel p " << subsystem.atoms[i].x << " " << subsystem.atoms[i].y << " "  << subsystem.atoms[i].z << endl;
                                         dr[0] = subsystem.atoms[i].x - subsystem.atoms[j].x;
                                         dr[1] = subsystem.atoms[i].y - subsystem.atoms[j].y;
                                         dr[2] = subsystem.atoms[i].z - subsystem.atoms[j].z;
@@ -650,24 +622,19 @@ std::tuple<float, torch::Tensor> ComputeAccelPredicted(SubSystem &subsystem) {
                                             r1 = sqrt(rr);
                                             fcVal = 48.0 * ri2 * ri6 * (ri6 - 0.5) + Duc / r1;
                                             vVal = 4.0 * ri6 * (ri6 - 1.0) - Uc - Duc * (r1 - RCUT);
-//                                                cout << "interatomic distance(rr) = " << rr << " fcVal= " << fcVal << " vVal= "<< vVal << endl;
-                                            //if(subsystem.pid == 0) cout << " atom " << j << " ri2 :" << ri2 << " ri6 " << ri6 << " r1 " << r1 << " fcVal " << fcVal << " vVal " << vVal << " bintra " << bintra << endl;
                                             if (bintra) lpe += vVal; else lpe += 0.5 * vVal;
 
                                             f = fcVal * dr[0];
                                             subsystem.atoms[i].ax += f;
                                             if (bintra) subsystem.atoms[j].ax -= f;
-//                                            if(subsystem.pid == 0) cout << "accleration x" << subsystem.atoms[j].ax << " factor " << " : " << f << endl;
 
                                             f = fcVal * dr[1];
                                             subsystem.atoms[i].ay += f;
                                             if (bintra) subsystem.atoms[j].ay -= f;
-//                                            if(subsystem.pid == 0) cout << "accleration y" << subsystem.atoms[j].ay << " factor " << " : " << f << endl;
 
                                             f = fcVal * dr[2];
                                             subsystem.atoms[i].az += f;
                                             if (bintra) subsystem.atoms[j].az -= f;
-//                                            if(subsystem.pid == 0) cout << "accleration z" << subsystem.atoms[j].az << " factor " << " : " << f << endl;
                                         }
                                     } /* Endif not self */
 
@@ -680,17 +647,12 @@ std::tuple<float, torch::Tensor> ComputeAccelPredicted(SubSystem &subsystem) {
                         } /* Endfor neighbor cells, c1 */
 
             } /* Endfor central cell, c */
-//    cout << " finished ";
     /* Global potential energy */
-    // if(subsystem.pid == 0) cout << "local potential energy " << lpe << endl;
-//    cout << "local potential energy " << lpe << endl;
     MPI_Allreduce(&lpe, &subsystem.potEnergy, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
     vector<vector<float> > forcesAlongAxis(3);
-//    cout << "This is the atoms after calculatinf potentials~~~~~~~~~~~~~~~~~~~~~~~" << endl;
     for (auto it_atom = subsystem.atoms.begin(); it_atom != subsystem.atoms.end(); ++it_atom) {
         if (it_atom->isResident == 1) {
-//            cout << atom.x << " " << atom.y << " " << atom.z << " " << atom.isResident << endl;
             forcesAlongAxis[0].push_back((float) it_atom->ax);
             forcesAlongAxis[1].push_back((float) it_atom->ay);
             forcesAlongAxis[2].push_back((float) it_atom->az);
@@ -698,11 +660,8 @@ std::tuple<float, torch::Tensor> ComputeAccelPredicted(SubSystem &subsystem) {
     }
     int Np = forcesAlongAxis[0].size();
     torch::Tensor forces = torch::from_blob(&forcesAlongAxis[0][0], {1, Np});
-//    cout << "this the forces along X " << forces << endl;
     forces = torch::cat({forces, torch::from_blob(&forcesAlongAxis[1][0], {1, Np}),
                          torch::from_blob(&forcesAlongAxis[2][0], {1, Np})}, 1);
-//    cout << "This is the concatenated forces matrix\n" << forces << endl;
     auto test = std::make_tuple(lpe, forces);
-//    cout << "exiting LJ3D " << endl;
-    return std::make_tuple(lpe, forces); // Create object before return.
+    return std::make_tuple(lpe, forces);
 }
